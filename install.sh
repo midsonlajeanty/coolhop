@@ -17,7 +17,7 @@ require_running() {
 
 needs_backup() {
   case "${1:-}" in
-    teams | plan | help | list | --help | -h | --version | -V) return 1 ;;
+    teams | plan | check | help | list | --help | -h | --version | -V) return 1 ;;
     *) return 0 ;;
   esac
 }

@@ -1,0 +1,53 @@
+name: upstream
+
+on:
+  schedule:
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  schema:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: "8.4"
+          extensions: pdo_pgsql
+          tools: composer
+      - run: composer install --no-interaction --no-progress
+      - id: latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "tag=$(gh api repos/coollabsio/coolify/releases/latest --jq .tag_name)" >> "$GITHUB_OUTPUT"
+      - env:
+          TAG: ${{ steps.latest.outputs.tag }}
+        run: bin/dump-schema --upstream "$TAG"
+      - run: |
+          docker run -d --name upstream-check -p 54330:5432 -e POSTGRES_PASSWORD=x -e POSTGRES_DB=coolify postgres:15
+          until docker exec upstream-check pg_isready -U postgres -d coolify; do sleep 1; done
+          sleep 2
+          docker exec -i upstream-check psql -q -U postgres -d coolify < tests/fixtures/schema.sql
+      - id: check
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: "54330"
+          DB_USERNAME: postgres
+          DB_PASSWORD: x
+        run: php coolhop check
+      - if: failure() && steps.check.conclusion == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.latest.outputs.tag }}
+        run: |
+          gh issue create \
+            --title "Coolify ${TAG} schema is not supported" \
+            --body "The weekly upstream check found team-owned columns coolhop does not know in Coolify ${TAG}. See ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."

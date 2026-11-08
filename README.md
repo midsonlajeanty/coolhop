@@ -59,6 +59,7 @@ When something would break, the plan lists it under **Blockers** and coolhop ref
 The guided mode starts when no command is given. Every step also has flags, for scripts:
 
 ```bash
+install.sh | bash -s -- check
 install.sh | bash -s -- teams
 install.sh | bash -s -- plan  --from="HQ" --to="PAAS" --server="srv-1" --server="srv-2"
 install.sh | bash -s -- apply --from="HQ" --to="PAAS" --server="srv-1" --yes
@@ -104,7 +105,7 @@ composer test
 composer lint
 ```
 
-Tests run against the real Coolify schema in `tests/fixtures/schema.sql`, which holds no data. `bin/acceptance <container> <plan options>` runs plan, apply and rollback against a restored Coolify dump and checks that the data is identical afterwards.
+Tests run against the real Coolify schema in `tests/fixtures/schema.sql`, built from the upstream migrations with `bin/dump-schema --upstream <version>` and holding no data. A weekly workflow runs `coolhop check` against the latest Coolify release. `bin/acceptance <container> <plan options>` runs plan, apply and rollback against a restored Coolify dump and checks that the data is identical afterwards.
 
 ## License
 
