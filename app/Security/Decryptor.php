@@ -44,12 +44,10 @@ final class Decryptor
 
     private function unserializeString(string $value): string
     {
-        if (preg_match('/^s:\d+:".*";$/s', $value) !== 1) {
-            return $value;
+        if (preg_match('/^s:(\d+):"(.*)";$/s', $value, $matches) === 1 && strlen($matches[2]) === (int) $matches[1]) {
+            return $matches[2];
         }
 
-        $unserialized = @unserialize($value, ['allowed_classes' => false]);
-
-        return is_string($unserialized) ? $unserialized : $value;
+        return $value;
     }
 }
