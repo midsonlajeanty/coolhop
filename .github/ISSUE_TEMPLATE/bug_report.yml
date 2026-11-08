@@ -1,0 +1,34 @@
+name: Bug report
+description: Something went wrong with coolhop
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Never paste real IP addresses, credentials, tokens or database dumps. Replace team, server and project names with neutral ones.
+  - type: input
+    id: coolhop
+    attributes:
+      label: coolhop version
+      placeholder: v0.1.0
+    validations:
+      required: true
+  - type: input
+    id: coolify
+    attributes:
+      label: Coolify version
+      placeholder: v4.6.0
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: The command you ran, what you expected and what you got.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: The plan or error output, with names replaced.
+      render: text
