@@ -5,6 +5,8 @@ namespace App\Analysis;
 use App\Analysis\Rules\ProjectRule;
 use App\Analysis\Rules\Rule;
 use App\Analysis\Rules\ServerRule;
+use App\Analysis\Rules\SharedItemRule;
+use App\Analysis\Rules\UnusedItemRule;
 use App\Analysis\Rules\TopologyRule;
 use App\Instance\Inventory;
 use App\Instance\Server;
@@ -18,6 +20,8 @@ final class Planner
         ServerRule::class,
         ProjectRule::class,
         TopologyRule::class,
+        SharedItemRule::class,
+        UnusedItemRule::class,
     ];
 
     private readonly Inventory $inventory;
