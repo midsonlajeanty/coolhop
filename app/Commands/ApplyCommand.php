@@ -24,6 +24,8 @@ class ApplyCommand extends Command
         {--server=* : Server to move, by name or uuid}
         {--take=* : Unused item of the source team to take along, as table:id}
         {--on-variable-clash=keep : keep or stop when a team variable exists in both teams}
+        {--fingerprint= : Fingerprint printed by plan, so exactly the reviewed plan is applied}
+        {--replan : Apply the plan as it is now instead of a reviewed fingerprint}
         {--yes : Confirm without asking}';
 
     protected $description = 'Move servers to another team';
@@ -32,6 +34,13 @@ class ApplyCommand extends Command
     {
         if (! $this->option('yes')) {
             $this->error('apply changes the Coolify database. Pass --yes, or run coolhop without arguments for the guided mode.');
+
+            return PlanCommand::INVALID;
+        }
+
+        $fingerprint = $this->option('fingerprint');
+        if (! is_string($fingerprint) && ! $this->option('replan')) {
+            $this->error('Pass --fingerprint with the value printed by coolhop plan, or --replan to apply the plan as it is now.');
 
             return PlanCommand::INVALID;
         }
@@ -56,7 +65,7 @@ class ApplyCommand extends Command
         new PlanRenderer($db)->render($plan, $this->output);
 
         try {
-            $journal = $applier->apply($request, $plan->fingerprint(), getenv('COOLHOP_BACKUP') ?: null);
+            $journal = $applier->apply($request, is_string($fingerprint) ? $fingerprint : $plan->fingerprint(), getenv('COOLHOP_BACKUP') ?: null);
         } catch (RuntimeException $e) {
             $this->error($e->getMessage());
 

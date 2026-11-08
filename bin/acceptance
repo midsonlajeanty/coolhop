@@ -27,7 +27,7 @@ dump > "${work}/before.sql"
 
 run teams
 run plan "$@" || true
-run apply "$@" --yes
+run apply "$@" --yes --replan
 
 journal="$(basename "$(dirname "$(ls "${work}"/*/journal.json)")")"
 echo "journal: ${journal}"

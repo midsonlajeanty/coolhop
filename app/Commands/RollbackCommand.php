@@ -15,6 +15,12 @@ class RollbackCommand extends Command
 
     public function handle(Rollback $rollback): int
     {
+        if (! $this->option('yes') && ! $this->input->isInteractive()) {
+            $this->error('Pass --yes to confirm the rollback when there is no terminal.');
+
+            return PlanCommand::INVALID;
+        }
+
         if (! $this->option('yes') && ! $this->confirm('Undo the move recorded in '.$this->argument('journal').'?')) {
             return PlanCommand::INVALID;
         }

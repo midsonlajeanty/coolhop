@@ -23,6 +23,6 @@ class AppServiceProvider extends ServiceProvider
             new CacheClearer,
             config('coolhop.home'),
         ));
-        $this->app->bind(Rollback::class, fn ($app): Rollback => new Rollback($app[ConnectionInterface::class], new CacheClearer, config('coolhop.home')));
+        $this->app->bind(Rollback::class, fn ($app): Rollback => new Rollback($app[ConnectionInterface::class], new CacheClearer, config('coolhop.home'), $app[Planner::class], $app[Decryptor::class]));
     }
 }

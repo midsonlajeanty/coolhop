@@ -83,6 +83,8 @@ final class KnownSchema
         'webhook_notification_settings.team_id->teams',
     ];
 
+    public const array IGNORED_TABLES = ['telescope_entries', 'telescope_entries_tags', 'telescope_monitoring'];
+
     public const array GUARDED_TABLES = [
         'teams', 'servers', 'private_keys', 'github_apps', 'gitlab_apps', 'gitea_apps', 's3_storages',
         'cloud_provider_tokens', 'integration_tokens', 'projects', 'environments', 'tags',

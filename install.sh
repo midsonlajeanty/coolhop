@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+umask 077
 
 REPO="midsonlajeanty/coolhop"
 HOST_HOME="/data/coolify/backups/coolhop"

@@ -90,13 +90,13 @@ it('requires --yes to apply', function (): void {
 it('refuses to apply with a stale backup', function (): void {
     touch($this->backup, time() - 7200);
 
-    $this->artisan('apply', [...moveArgs(), '--yes' => true])
+    $this->artisan('apply', [...moveArgs(), '--yes' => true, '--replan' => true])
         ->expectsOutputToContain('Backup')
         ->assertExitCode(1);
 });
 
 it('applies then rolls back', function (): void {
-    $this->artisan('apply', [...moveArgs(), '--yes' => true])
+    $this->artisan('apply', [...moveArgs(), '--yes' => true, '--replan' => true])
         ->expectsOutputToContain('Moved 2 servers')
         ->assertExitCode(0);
     expect(DB::table('servers')->where('id', $this->web1)->value('team_id'))->toBe(0);
@@ -112,14 +112,49 @@ it('refuses to apply on an unknown schema but still plans', function (): void {
 
     try {
         $this->artisan('plan', moveArgs())->expectsOutputToContain('projects.owner_team_id')->assertExitCode(0);
-        $this->artisan('apply', [...moveArgs(), '--yes' => true])->expectsOutputToContain('schema')->assertExitCode(1);
+        $this->artisan('apply', [...moveArgs(), '--yes' => true, '--replan' => true])->expectsOutputToContain('schema')->assertExitCode(1);
     } finally {
         DB::statement('alter table projects drop column owner_team_id');
     }
 });
 
 it('uses the singular for one server', function (): void {
-    $this->artisan('apply', ['--from' => 'Agency', '--to' => 'Platform', '--server' => ['web-2'], '--yes' => true])
+    $this->artisan('apply', ['--from' => 'Agency', '--to' => 'Platform', '--server' => ['web-2'], '--yes' => true, '--replan' => true])
         ->expectsOutputToContain('Moved 1 server to Platform.')
         ->assertExitCode(0);
+});
+
+it('requires the reviewed fingerprint or --replan', function (): void {
+    $this->artisan('apply', [...moveArgs(), '--yes' => true])
+        ->expectsOutputToContain('--fingerprint')
+        ->assertExitCode(2);
+});
+
+it('refuses a fingerprint that no longer matches', function (): void {
+    $this->artisan('apply', [...moveArgs(), '--yes' => true, '--fingerprint' => str_repeat('0', 64)])
+        ->expectsOutputToContain('changed since the plan')
+        ->assertExitCode(1);
+});
+
+it('applies with the fingerprint printed by plan', function (): void {
+    Artisan::call('plan', [...moveArgs(), '--json' => true]);
+    $fingerprint = json_decode(Artisan::output(), true)['fingerprint'];
+
+    $this->artisan('apply', [...moveArgs(), '--yes' => true, '--fingerprint' => $fingerprint])->assertExitCode(0);
+});
+
+it('prints the fingerprint in the plan', function (): void {
+    $this->artisan('plan', moveArgs())->expectsOutputToContain('--fingerprint=')->assertExitCode(0);
+});
+
+it('rejects an invalid variable clash policy', function (): void {
+    $this->artisan('plan', [...moveArgs(), '--on-variable-clash' => 'bogus'])
+        ->expectsOutputToContain('keep or stop')
+        ->assertExitCode(2);
+});
+
+it('tells how to confirm a rollback without a terminal', function (): void {
+    $this->artisan('rollback', ['journal' => 'x', '--no-interaction' => true])
+        ->expectsOutputToContain('--yes')
+        ->assertExitCode(2);
 });

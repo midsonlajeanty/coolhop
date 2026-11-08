@@ -44,6 +44,9 @@ class PlanCommand extends Command
             $this->line(json_encode(PlanJson::from($plan, $guard), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
         } else {
             new PlanRenderer($db)->render($plan, $this->output, $guard);
+            if (! $plan->hasBlockers() && $guard->canApply()) {
+                $this->line('To apply exactly this plan, run apply with the same options and --fingerprint='.$plan->fingerprint());
+            }
         }
 
         return $plan->hasBlockers() ? self::FAILURE : self::SUCCESS;

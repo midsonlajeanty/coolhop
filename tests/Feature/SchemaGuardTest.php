@@ -55,7 +55,7 @@ it('accepts a newer schema when the guard passes', function (): void {
         ->and($result->lastMigration)->toBe('2099_01_01_000000_future');
 });
 
-it('refuses an unknown reference column without a foreign key', function (string $sql, string $column) {
+it('refuses an unknown reference column without a foreign key', function (string $sql, string $column): void {
     Database::pdo()->exec($sql);
 
     expect(SchemaGuard::check(DB::connection())->unknownColumns)->toBe([$column]);
@@ -63,3 +63,14 @@ it('refuses an unknown reference column without a foreign key', function (string
     ['alter table services add column private_key_id bigint', 'services.private_key_id'],
     ['alter table projects add column owner_type varchar(255)', 'projects.owner_type'],
 ]);
+
+it('ignores the telescope debug tables some instances still have', function (): void {
+    $pdo = Database::pdo();
+    $pdo->exec('create table if not exists telescope_entries (sequence bigserial primary key, batch_id uuid, family_hash varchar(255))');
+
+    try {
+        expect(SchemaGuard::check(DB::connection())->canApply())->toBeTrue();
+    } finally {
+        $pdo->exec('drop table telescope_entries');
+    }
+});

@@ -23,11 +23,11 @@ it('returns null for garbage', function (): void {
     expect(new Decryptor(Fixture::APP_KEY)->decrypt('not-a-payload'))->toBeNull();
 });
 
-it('fingerprints plans independently of row order', function () {
+it('fingerprints plans independently of row order', function (): void {
     $team = new Team(1, 'A');
     $one = new RowChange('servers', ['id' => 1], 'team_id', 1, 2);
     $two = new RowChange('servers', ['id' => 2], 'team_id', 1, 2);
-    $plan = fn (array $changes) => new MovePlan($team, $team, [], $changes, [], [], []);
+    $plan = fn (array $changes): MovePlan => new MovePlan($team, $team, [], $changes, [], [], []);
 
     expect($plan([$one, $two])->fingerprint())->toBe($plan([$two, $one])->fingerprint());
 });

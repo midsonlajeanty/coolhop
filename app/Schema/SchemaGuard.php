@@ -24,6 +24,7 @@ final class SchemaGuard
     {
         $columns = $db->table('information_schema.columns')
             ->where('table_schema', 'public')
+            ->whereNotIn('table_name', KnownSchema::IGNORED_TABLES)
             ->where(fn ($q) => $q->where('column_name', 'team_id')->orWhere('column_name', 'like', '%\_team\_id'))
             ->orderBy('table_name')->orderBy('column_name')
             ->get(['table_name', 'column_name'])
@@ -58,6 +59,7 @@ final class SchemaGuard
     {
         $columns = $db->table('information_schema.columns')
             ->where('table_schema', 'public')
+            ->whereNotIn('table_name', KnownSchema::IGNORED_TABLES)
             ->where(fn ($q) => $q->where('column_name', 'like', '%\_id')->orWhere('column_name', 'like', '%\_type'))
             ->orderBy('table_name')->orderBy('column_name')
             ->get(['table_name', 'column_name'])

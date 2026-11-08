@@ -9,6 +9,7 @@ use App\Apply\Rollback;
 use App\Apply\RollbackConflict;
 use App\Security\Decryptor;
 use Illuminate\Support\Facades\DB;
+use Tests\Support\Database;
 use Tests\Support\Fixture;
 
 function snapshot(): array
@@ -29,16 +30,20 @@ beforeEach(function (): void {
     $this->key = Fixture::privateKey($this->a, 'shared');
     $this->s1 = Fixture::server($this->a, 'S1', $this->key);
     Fixture::server($this->a, 'S2', $this->key);
-    $d1 = Fixture::destination($this->s1);
-    $app = Fixture::application(Fixture::environment(Fixture::project($this->a, 'P1')), $d1);
+    $this->d1 = $d1 = Fixture::destination($this->s1);
+    $this->db = Fixture::database('standalone_postgresqls', Fixture::environment($this->p1 = Fixture::project($this->a, 'P1')), $d1);
+    $app = Fixture::application(Fixture::environment($this->p1), $d1);
+    Fixture::sharedVariable($this->a, 'team', 'FLUX');
+    Fixture::envVar('App\\Models\\Application', $app, 'F', '{{team.FLUX}}');
     Fixture::tag($this->a, 'web', 'App\Models\Application', $app);
 
     $planner = new Planner(DB::connection(), new Decryptor(Fixture::APP_KEY));
+    $this->planner = $planner;
     $request = new MoveRequest($this->a, $this->b, [$this->s1]);
     $this->before = snapshot();
     $this->journal = new Applier(DB::connection(), $planner, new CacheClearer('/nonexistent'), $this->home)
         ->apply($request, $planner->plan($request)->fingerprint(), $this->backup);
-    $this->rollback = new Rollback(DB::connection(), new CacheClearer('/nonexistent'), $this->home);
+    $this->rollback = new Rollback(DB::connection(), new CacheClearer('/nonexistent'), $this->home, $planner, new Decryptor(Fixture::APP_KEY));
 });
 
 afterEach(fn (): string|false => exec('rm -rf '.escapeshellarg($this->home)));
@@ -79,4 +84,37 @@ it('refuses to roll back twice', function (): void {
 
 it('requires a fresh backup', function (): void {
     expect(fn () => $this->rollback->run($this->journal, null))->toThrow(RuntimeException::class, 'Backup missing');
+});
+
+it('refuses when a backup was added to a moved database after the move', function (): void {
+    Fixture::backup($this->b, 'standalone_postgresqls', $this->db, null);
+
+    expect(fn () => $this->rollback->run($this->journal, $this->backup))->toThrow(RollbackConflict::class, 'scheduled_database_backups');
+});
+
+it('refuses when a project was created on a moved server after the move', function (): void {
+    Fixture::application(Fixture::environment(Fixture::project($this->b, 'Later')), $this->d1);
+
+    expect(fn () => $this->rollback->run($this->journal, $this->backup))->toThrow(RollbackConflict::class, 'projects');
+});
+
+it('refuses when the target team started using a copied team variable', function (): void {
+    $s3 = Fixture::server($this->b, 'B1');
+    $other = Fixture::application(Fixture::environment(Fixture::project($this->b, 'Own')), Fixture::destination($s3));
+    Fixture::envVar('App\\Models\\Application', $other, 'F', '{{team.FLUX}}');
+
+    expect(fn () => $this->rollback->run($this->journal, $this->backup))->toThrow(RollbackConflict::class, 'FLUX');
+});
+
+it('keeps the journal retryable when the commit fails', function (): void {
+    DB::unprepared("create function coolhop_fail_commit() returns trigger as \$\$ begin raise exception 'commit boom'; end \$\$ language plpgsql;
+        create constraint trigger coolhop_fail_commit after update on servers deferrable initially deferred for each row execute function coolhop_fail_commit();");
+
+    try {
+        expect(fn () => $this->rollback->run($this->journal, $this->backup))->toThrow(Exception::class, 'commit boom');
+    } finally {
+        Database::pdo()->exec('drop trigger if exists coolhop_fail_commit on servers; drop function if exists coolhop_fail_commit();');
+    }
+
+    expect(Journal::fromFile(Journal::path($this->home, $this->journal->id))->rolledBackAt)->toBeNull();
 });

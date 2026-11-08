@@ -62,7 +62,7 @@ The guided mode starts when no command is given. Every step also has flags, for 
 install.sh | bash -s -- check
 install.sh | bash -s -- teams
 install.sh | bash -s -- plan  --from="HQ" --to="PAAS" --server="srv-1" --server="srv-2"
-install.sh | bash -s -- apply --from="HQ" --to="PAAS" --server="srv-1" --yes
+install.sh | bash -s -- apply --from="HQ" --to="PAAS" --server="srv-1" --yes --fingerprint=<printed by plan>
 install.sh | bash -s -- rollback 20261108-202318-4bb2 --yes
 ```
 
@@ -75,6 +75,8 @@ where `install.sh` stands for `curl -fsSL https://raw.githubusercontent.com/mids
 | `--take=table:id` | also move an unused item of the source team, repeatable |
 | `--on-variable-clash=keep\|stop` | what to do when a team variable exists in both teams |
 | `--json` | `plan` only, machine readable output |
+| `--fingerprint` | `apply` only, the value printed by `plan`: apply refuses if the plan changed since |
+| `--replan` | `apply` only, apply the plan as it is now instead of a reviewed fingerprint |
 
 Pin a version with `COOLHOP_VERSION=v1.0.0`.
 

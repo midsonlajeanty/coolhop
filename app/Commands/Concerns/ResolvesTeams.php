@@ -53,7 +53,8 @@ trait ResolvesTeams
             $this->resolveTeam($inventory, $this->option('to'))->id,
             $this->resolveServers($inventory, $servers),
             $this->stringOptions('take'),
-            TeamVariablePolicy::from($this->option('on-variable-clash') ?? 'keep'),
+            TeamVariablePolicy::tryFrom((string) ($this->option('on-variable-clash') ?? 'keep'))
+                ?? throw new InvalidArgumentException('--on-variable-clash must be keep or stop.'),
         );
     }
 
