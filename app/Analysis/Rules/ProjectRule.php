@@ -4,7 +4,7 @@ namespace App\Analysis\Rules;
 
 use App\Analysis\IssueLevel;
 use App\Analysis\PlanBuilder;
-use App\Instance\Resource;
+use App\Instance\HostedResource;
 
 final class ProjectRule implements Rule
 {
@@ -21,22 +21,22 @@ final class ProjectRule implements Rule
 
         collect($plan->sourceResources)
             ->groupBy('projectId')
-            ->each(function ($resources, int $projectId) use ($plan) {
-                $this->classify($plan, $projectId, $resources->all());
+            ->each(function ($resources, int $projectId) use ($plan): void {
+                $this->classify($plan, $projectId, array_values($resources->all()));
             });
     }
 
     /**
-     * @param  list<Resource>  $resources
+     * @param  list<HostedResource>  $resources
      */
     private function classify(PlanBuilder $plan, int $projectId, array $resources): void
     {
-        $moving = array_filter($resources, fn (Resource $r) => $r->serverId !== null && $plan->isMovingServer($r->serverId));
+        $moving = array_filter($resources, fn (HostedResource $r): bool => $r->serverId !== null && $plan->isMovingServer($r->serverId));
         if ($moving === []) {
             return;
         }
 
-        $staying = array_filter($resources, fn (Resource $r) => $r->serverId === null || ! $plan->isMovingServer($r->serverId));
+        $staying = array_filter($resources, fn (HostedResource $r): bool => $r->serverId === null || ! $plan->isMovingServer($r->serverId));
         if ($staying === []) {
             $plan->moveProject($projectId);
 
@@ -44,7 +44,7 @@ final class ProjectRule implements Rule
         }
 
         $name = $plan->db->table('projects')->where('id', $projectId)->value('name');
-        $servers = fn (array $list) => collect($list)->map(fn (Resource $r) => $plan->serverName($r->serverId))->unique()->implode(', ');
+        $servers = fn (array $list) => collect($list)->map(fn (HostedResource $r): string => $plan->serverName($r->serverId))->unique()->implode(', ');
 
         $plan->issue(IssueLevel::Blocker, 'mixed_project', sprintf(
             'Project "%s" has resources on moving servers (%s) and on servers that stay (%s).',

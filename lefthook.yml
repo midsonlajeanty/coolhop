@@ -1,0 +1,22 @@
+pre-commit:
+  parallel: true
+  commands:
+    pint:
+      glob: "*.php"
+      run: vendor/bin/pint --test {staged_files}
+    phpstan:
+      glob: "*.php"
+      run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress
+    shellcheck:
+      glob: "{install.sh,bin/*}"
+      run: shellcheck {staged_files}
+
+pre-push:
+  commands:
+    test:
+      run: vendor/bin/pest
+
+commit-msg:
+  commands:
+    conventional:
+      run: "grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\\([a-z0-9-]+\\))?!?: .+' {1}"

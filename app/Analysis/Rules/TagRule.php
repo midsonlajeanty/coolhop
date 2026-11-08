@@ -3,7 +3,7 @@
 namespace App\Analysis\Rules;
 
 use App\Analysis\PlanBuilder;
-use App\Instance\Resource;
+use App\Instance\HostedResource;
 
 final class TagRule implements Rule
 {
@@ -11,7 +11,7 @@ final class TagRule implements Rule
     {
         $targetTags = $plan->db->table('tags')->where('team_id', $plan->to->id)->pluck('id', 'name');
 
-        foreach (collect($plan->movingResources())->groupBy(fn (Resource $r) => $r->morphClass()) as $morph => $resources) {
+        foreach (collect($plan->movingResources())->groupBy(fn (HostedResource $r): string => $r->morphClass()) as $morph => $resources) {
             $plan->db->table('taggables as tg')
                 ->join('tags as t', 't.id', '=', 'tg.tag_id')
                 ->where('t.team_id', $plan->from->id)
@@ -19,7 +19,7 @@ final class TagRule implements Rule
                 ->whereIn('tg.taggable_id', $resources->pluck('id'))
                 ->orderBy('tg.taggable_id')->orderBy('t.id')
                 ->get(['tg.tag_id', 'tg.taggable_id', 'tg.taggable_type', 't.name'])
-                ->each(function ($row) use ($plan, $targetTags) {
+                ->each(function ($row) use ($plan, $targetTags): void {
                     $new = $targetTags->has($row->name) ? (int) $targetTags[$row->name] : $plan->copy('tags', (int) $row->tag_id);
                     $plan->change(
                         'taggables',

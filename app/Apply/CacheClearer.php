@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Apply;
 
-final class CacheClearer
+final readonly class CacheClearer
 {
-    public function __construct(private readonly string $artisan = '/var/www/html/artisan') {}
+    public function __construct(private string $artisan = '/var/www/html/artisan') {}
 
     public function clear(): void
     {

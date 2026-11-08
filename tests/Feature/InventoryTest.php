@@ -5,18 +5,18 @@ use Illuminate\Support\Facades\DB;
 use Tests\Support\Database;
 use Tests\Support\Fixture;
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->inventory = new Inventory(DB::connection());
 });
 
-it('lists teams', function () {
+it('lists teams', function (): void {
     Fixture::team('A');
     Fixture::team('B');
 
     expect(array_map(fn ($t) => $t->name, $this->inventory->teams()))->toBe(['A', 'B']);
 });
 
-it('never lists the localhost server', function () {
+it('never lists the localhost server', function (): void {
     $a = Fixture::team('A', id: 0);
     Fixture::server($a, 'localhost', id: 0);
     Fixture::server($a, 'remote');
@@ -24,7 +24,7 @@ it('never lists the localhost server', function () {
     expect(array_map(fn ($s) => $s->name, $this->inventory->servers()))->toBe(['remote']);
 });
 
-it('reads server settings', function () {
+it('reads server settings', function (): void {
     $a = Fixture::team('A');
     Fixture::server($a, 'builder', settings: ['is_build_server' => 'true', 'is_swarm_worker' => 'true']);
 
@@ -35,7 +35,7 @@ it('reads server settings', function () {
         ->and($server->isSwarmManager)->toBeFalse();
 });
 
-it('resolves the server of every resource', function () {
+it('resolves the server of every resource', function (): void {
     $a = Fixture::team('A');
     $s = Fixture::server($a, 'S');
     $d = Fixture::destination($s);
@@ -52,7 +52,7 @@ it('resolves the server of every resource', function () {
         ->and($resources[0]->teamId)->toBe($a);
 });
 
-it('flags unknown destination types', function () {
+it('flags unknown destination types', function (): void {
     $a = Fixture::team('A');
     $d = Fixture::destination(Fixture::server($a, 'S'));
     $e = Fixture::environment(Fixture::project($a, 'P'));
@@ -64,7 +64,7 @@ it('flags unknown destination types', function () {
         ->and($resource->unknownDestinationType)->toBe('App\Models\FutureDocker');
 });
 
-it('skips soft deleted resources', function () {
+it('skips soft deleted resources', function (): void {
     $a = Fixture::team('A');
     $d = Fixture::destination(Fixture::server($a, 'S'));
     $e = Fixture::environment(Fixture::project($a, 'P'));

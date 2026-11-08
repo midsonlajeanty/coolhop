@@ -43,7 +43,7 @@ trait ResolvesTeams
 
     protected function requestFromOptions(Inventory $inventory): MoveRequest
     {
-        $servers = (array) $this->option('server');
+        $servers = $this->stringOptions('server');
         if ($servers === []) {
             throw new InvalidArgumentException('Pass at least one --server.');
         }
@@ -52,8 +52,16 @@ trait ResolvesTeams
             $this->resolveTeam($inventory, $this->option('from'))->id,
             $this->resolveTeam($inventory, $this->option('to'))->id,
             $this->resolveServers($inventory, $servers),
-            array_values((array) $this->option('take')),
+            $this->stringOptions('take'),
             TeamVariablePolicy::from($this->option('on-variable-clash') ?? 'keep'),
         );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function stringOptions(string $name): array
+    {
+        return array_values(array_filter((array) $this->option($name), is_string(...)));
     }
 }

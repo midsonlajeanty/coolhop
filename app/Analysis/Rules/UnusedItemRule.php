@@ -3,6 +3,7 @@
 namespace App\Analysis\Rules;
 
 use App\Analysis\PlanBuilder;
+use App\Analysis\Reference;
 use App\Analysis\References;
 
 final class UnusedItemRule implements Rule
@@ -12,7 +13,7 @@ final class UnusedItemRule implements Rule
         $taken = array_flip($plan->request->takeUnused);
         $keysOfUnusedGitApps = [];
 
-        foreach (array_keys(References::SHARED) as $itemTable) {
+        foreach (array_keys(References::shared()) as $itemTable) {
             $items = $plan->db->table($itemTable)->where('team_id', $plan->from->id)->orderBy('id')->get();
 
             foreach ($items as $item) {
@@ -38,18 +39,6 @@ final class UnusedItemRule implements Rule
             return true;
         }
 
-        foreach (References::SHARED[$itemTable] as $reference) {
-            [$table, $column] = $reference;
-            $used = $plan->db->table($table)
-                ->where($column, $id)
-                ->when(isset($reference[2]), fn ($q) => $q->where($reference[2], $reference[3]))
-                ->exists();
-
-            if ($used) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(References::to($itemTable), fn (Reference $reference) => $reference->query($plan->db, $id)->exists());
     }
 }

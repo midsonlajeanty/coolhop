@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Schema;
 
 final class KnownSchema
 {
-    public const MIN_MIGRATION = '2026_11_01_142702_add_update_channel_to_instance_settings_table';
+    public const string MIN_MIGRATION = '2026_11_01_142702_add_update_channel_to_instance_settings_table';
 
-    public const OWNERSHIP_COLUMNS = [
+    public const array OWNERSHIP_COLUMNS = [
         'audit_events.team_id',
         'cloud_init_scripts.team_id',
         'cloud_provider_tokens.team_id',
@@ -37,7 +39,7 @@ final class KnownSchema
         'webhook_notification_settings.team_id',
     ];
 
-    public const FOREIGN_KEYS = [
+    public const array FOREIGN_KEYS = [
         'additional_destinations.server_id->servers',
         'cloud_init_scripts.team_id->teams',
         'cloud_provider_tokens.team_id->teams',
@@ -81,12 +83,12 @@ final class KnownSchema
         'webhook_notification_settings.team_id->teams',
     ];
 
-    public const GUARDED_TABLES = [
+    public const array GUARDED_TABLES = [
         'teams', 'servers', 'private_keys', 'github_apps', 'gitlab_apps', 'gitea_apps', 's3_storages',
         'cloud_provider_tokens', 'integration_tokens', 'projects', 'environments', 'tags',
     ];
 
-    public const RESOURCE_TABLES = [
+    public const array RESOURCE_TABLES = [
         'applications' => 'App\Models\Application',
         'services' => 'App\Models\Service',
         'standalone_postgresqls' => 'App\Models\StandalonePostgresql',
@@ -100,7 +102,7 @@ final class KnownSchema
         'standalone_sqlites' => 'App\Models\StandaloneSqlite',
     ];
 
-    public const DESTINATION_TYPES = [
+    public const array DESTINATION_TYPES = [
         'App\Models\StandaloneDocker' => 'standalone_dockers',
         'App\Models\SwarmDocker' => 'swarm_dockers',
     ];

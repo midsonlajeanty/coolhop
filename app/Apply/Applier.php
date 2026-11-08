@@ -12,22 +12,22 @@ use Illuminate\Database\ConnectionInterface;
 use Illuminate\Support\Str;
 use RuntimeException;
 
-final class Applier
+final readonly class Applier
 {
-    private const LOCK_TIMEOUT = '5s';
+    private const string LOCK_TIMEOUT = '5s';
 
     public function __construct(
-        private readonly ConnectionInterface $db,
-        private readonly Planner $planner,
-        private readonly CacheClearer $cache,
-        private readonly string $home,
+        private ConnectionInterface $db,
+        private Planner $planner,
+        private CacheClearer $cache,
+        private string $home,
     ) {}
 
     public function apply(MoveRequest $request, string $confirmedFingerprint, ?string $backupPath): Journal
     {
         BackupCheck::assertFresh($backupPath);
 
-        $journal = $this->db->transaction(function () use ($request, $confirmedFingerprint, $backupPath) {
+        $journal = $this->db->transaction(function () use ($request, $confirmedFingerprint, $backupPath): Journal {
             $this->db->statement("set local lock_timeout = '".self::LOCK_TIMEOUT."'");
 
             $plan = $this->planner->plan($request);
@@ -98,7 +98,7 @@ final class Applier
     /**
      * @param  list<RowChange>  $changes
      * @param  array<string, array{table: string, id: int, ref: string}>  $created
-     * @return list<array{table: string, key: array<string, int|string>, column: string, old: int|string|null, new: int|string|null}>
+     * @return list<array{table: string, key: array<string, int|string|null>, column: string, old: int|string|null, new: int|string|null}>
      */
     private function applyChanges(array $changes, array $created): array
     {

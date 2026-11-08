@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Instance;
 
-final readonly class Resource
+use App\Schema\KnownSchema;
+
+final readonly class HostedResource
 {
     public function __construct(
         public string $table,
@@ -17,6 +21,6 @@ final readonly class Resource
 
     public function morphClass(): string
     {
-        return \App\Schema\KnownSchema::RESOURCE_TABLES[$this->table];
+        return KnownSchema::RESOURCE_TABLES[$this->table];
     }
 }

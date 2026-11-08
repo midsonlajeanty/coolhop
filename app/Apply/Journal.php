@@ -7,7 +7,8 @@ use RuntimeException;
 final class Journal
 {
     /**
-     * @param  list<array{table: string, key: array<string, int|string>, column: string, old: int|string|null, new: int|string|null}>  $changes
+     * @param  array<string, mixed>  $request
+     * @param  list<array{table: string, key: array<string, int|string|null>, column: string, old: int|string|null, new: int|string|null}>  $changes
      * @param  list<array{table: string, id: int, ref: string}>  $created
      */
     public function __construct(

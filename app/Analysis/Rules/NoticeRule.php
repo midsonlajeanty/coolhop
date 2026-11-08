@@ -4,11 +4,11 @@ namespace App\Analysis\Rules;
 
 use App\Analysis\IssueLevel;
 use App\Analysis\PlanBuilder;
-use App\Instance\Resource;
+use App\Instance\HostedResource;
 
 final class NoticeRule implements Rule
 {
-    private const NOTIFICATION_FLAGS = [
+    private const array NOTIFICATION_FLAGS = [
         'discord_notification_settings' => ['discord_enabled'],
         'email_notification_settings' => ['smtp_enabled', 'resend_enabled'],
         'pushover_notification_settings' => ['pushover_enabled'],
@@ -29,7 +29,7 @@ final class NoticeRule implements Rule
     {
         $found = [];
 
-        foreach (collect($plan->movingResources())->groupBy(fn (Resource $r) => $r->morphClass()) as $morph => $resources) {
+        foreach (collect($plan->movingResources())->groupBy(fn (HostedResource $r): string => $r->morphClass()) as $morph => $resources) {
             $ids = $resources->pluck('id');
             if ($plan->db->table('secret_manager_links')->where('resourceable_type', $morph)->whereIn('resourceable_id', $ids)->exists()) {
                 $found[] = 'secret manager links';

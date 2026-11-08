@@ -1,5 +1,6 @@
 <?php
 
+use App\Commands\HopCommand;
 use Illuminate\Console\Scheduling\ScheduleFinishCommand;
 use Illuminate\Console\Scheduling\ScheduleListCommand;
 use Illuminate\Console\Scheduling\ScheduleRunCommand;
@@ -10,7 +11,7 @@ use Symfony\Component\Console\Command\DumpCompletionCommand;
 use Symfony\Component\Console\Command\HelpCommand;
 
 return [
-    'default' => App\Commands\HopCommand::class,
+    'default' => HopCommand::class,
     'paths' => [app_path('Commands')],
     'add' => [],
     'hidden' => [

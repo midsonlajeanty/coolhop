@@ -16,6 +16,9 @@ final readonly class MoveRequest
         public TeamVariablePolicy $teamVariablePolicy = TeamVariablePolicy::KeepTarget,
     ) {}
 
+    /**
+     * @return array{from: int, to: int, servers: list<int>, take_unused: list<string>, team_variable_policy: string}
+     */
     public function toArray(): array
     {
         return [
@@ -27,6 +30,9 @@ final readonly class MoveRequest
         ];
     }
 
+    /**
+     * @param  array{from: int, to: int, servers: list<int>, take_unused?: list<string>, team_variable_policy?: string}  $data
+     */
     public static function fromArray(array $data): self
     {
         return new self(

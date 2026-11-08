@@ -27,7 +27,7 @@ final class SchemaGuard
             ->where(fn ($q) => $q->where('column_name', 'team_id')->orWhere('column_name', 'like', '%\_team\_id'))
             ->orderBy('table_name')->orderBy('column_name')
             ->get(['table_name', 'column_name'])
-            ->map(fn ($row) => "{$row->table_name}.{$row->column_name}")
+            ->map(fn ($row): string => "{$row->table_name}.{$row->column_name}")
             ->all();
 
         return array_values(array_diff($columns, KnownSchema::OWNERSHIP_COLUMNS));
@@ -45,9 +45,9 @@ final class SchemaGuard
              where c.contype = 'f'"
         ))
             ->whereIn('target', KnownSchema::GUARDED_TABLES)
-            ->reject(fn ($key) => in_array("{$key->source}.{$key->column_name}->{$key->target}", KnownSchema::FOREIGN_KEYS, true))
-            ->map(fn ($key) => "{$key->source}.{$key->column_name}");
+            ->reject(fn ($key): bool => in_array("{$key->source}.{$key->column_name}->{$key->target}", KnownSchema::FOREIGN_KEYS, true))
+            ->map(fn ($key): string => "{$key->source}.{$key->column_name}");
 
-        return $keys->values()->all();
+        return array_values($keys->all());
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Analysis;
 
 use App\Instance\Server;
@@ -34,7 +36,7 @@ final readonly class MovePlan
      */
     public function issuesAt(IssueLevel $level): array
     {
-        return array_values(array_filter($this->issues, fn (Issue $issue) => $issue->level === $level));
+        return array_values(array_filter($this->issues, fn (Issue $issue): bool => $issue->level === $level));
     }
 
     public function fingerprint(): string

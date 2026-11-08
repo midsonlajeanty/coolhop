@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\DB;
 use Tests\Support\Fixture;
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->home = sys_get_temp_dir().'/coolhop-test-'.bin2hex(random_bytes(4));
     mkdir($this->home);
     $this->backup = $this->home.'/coolify.dump';
@@ -21,7 +21,7 @@ beforeEach(function () {
     $this->idle = Fixture::githubApp($this->agency, Fixture::privateKey($this->agency), 'idle-app');
 });
 
-afterEach(function () {
+afterEach(function (): void {
     putenv('COOLHOP_BACKUP');
     putenv('APP_KEY');
     exec('rm -rf '.escapeshellarg($this->home));
@@ -36,7 +36,7 @@ function guided($test)
         ->expectsQuestion('Take these unused items of Agency along?', ["github_apps:{$test->idle}"]);
 }
 
-it('moves servers through the guided flow', function () {
+it('moves servers through the guided flow', function (): void {
     guided($this)
         ->expectsQuestion('Type Platform to confirm', 'Platform')
         ->expectsOutputToContain('Moved 2 servers')
@@ -47,7 +47,7 @@ it('moves servers through the guided flow', function () {
         ->and(DB::table('github_apps')->where('name', 'idle-app')->value('team_id'))->toBe(0);
 });
 
-it('aborts on a wrong confirmation', function () {
+it('aborts on a wrong confirmation', function (): void {
     guided($this)
         ->expectsQuestion('Type Platform to confirm', 'nope')
         ->expectsOutputToContain('Nothing was changed')
@@ -56,7 +56,7 @@ it('aborts on a wrong confirmation', function () {
     expect(DB::table('servers')->where('id', $this->web1)->value('team_id'))->toBe($this->agency);
 });
 
-it('never asks for confirmation when the plan has blockers', function () {
+it('never asks for confirmation when the plan has blockers', function (): void {
     $p = DB::table('projects')->where('name', 'shop')->value('id');
     Fixture::database('standalone_postgresqls', Fixture::environment($p), Fixture::destination($this->web2));
 
@@ -69,7 +69,7 @@ it('never asks for confirmation when the plan has blockers', function () {
         ->assertExitCode(1);
 });
 
-it('points to the flags when there is no terminal', function () {
+it('points to the flags when there is no terminal', function (): void {
     $this->artisan('hop', ['--no-interaction' => true])
         ->expectsOutputToContain('coolhop plan')
         ->assertExitCode(2);

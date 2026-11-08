@@ -19,7 +19,7 @@ class TeamsCommand extends Command
 
         $rows = [];
         foreach ($inventory->teams() as $team) {
-            $names = $servers->get($team->id, collect())->map(fn ($s) => "{$s->name} ({$s->uuid})")->implode("\n");
+            $names = $servers->get($team->id, collect())->map(fn ($s): string => "{$s->name} ({$s->uuid})")->implode("\n");
             $rows[] = [$team->id, $team->name, $names ?: '-'];
         }
 

@@ -2,19 +2,16 @@
 
 namespace App\Apply;
 
+use App\Analysis\Reference;
 use App\Analysis\References;
 use Illuminate\Database\ConnectionInterface;
 
-final class Rollback
+final readonly class Rollback
 {
-    private const EXTRA_REFERENCES = [
-        'tags' => [['taggables', 'tag_id']],
-    ];
-
     public function __construct(
-        private readonly ConnectionInterface $db,
-        private readonly CacheClearer $cache,
-        private readonly string $home,
+        private ConnectionInterface $db,
+        private CacheClearer $cache,
+        private string $home,
     ) {}
 
     public function run(Journal $journal, ?string $backupPath): void
@@ -25,7 +22,7 @@ final class Rollback
 
         BackupCheck::assertFresh($backupPath);
 
-        $this->db->transaction(function () use ($journal) {
+        $this->db->transaction(function () use ($journal): void {
             $conflicts = [...$this->changedRows($journal), ...$this->usedCopies($journal)];
             if ($conflicts !== []) {
                 throw new RollbackConflict($conflicts);
@@ -74,12 +71,9 @@ final class Rollback
         $conflicts = [];
 
         foreach ($journal->created as $row) {
-            $expected = collect($journal->changes)->filter(fn ($c) => (string) $c['new'] === (string) $row['id'] && $this->points($c, $row['table']))->count();
-            $actual = collect(References::SHARED[$row['table']] ?? self::EXTRA_REFERENCES[$row['table']] ?? [])
-                ->sum(fn (array $reference) => $this->db->table($reference[0])
-                    ->where($reference[1], $row['id'])
-                    ->when(isset($reference[2]), fn ($q) => $q->where($reference[2], $reference[3]))
-                    ->count());
+            $expected = collect($journal->changes)->filter(fn ($c): bool => (string) $c['new'] === (string) $row['id'] && $this->points($c, $row['table']))->count();
+            $actual = collect(References::to($row['table']))
+                ->sum(fn (Reference $reference): int => $reference->query($this->db, $row['id'])->count());
 
             if ($actual > $expected) {
                 $conflicts[] = "{$row['table']} {$row['id']} (copied by coolhop) is now used by rows created after the move";
@@ -89,10 +83,11 @@ final class Rollback
         return $conflicts;
     }
 
+    /**
+     * @param  array{table: string, column: string}  $change
+     */
     private function points(array $change, string $table): bool
     {
-        $references = References::SHARED[$table] ?? self::EXTRA_REFERENCES[$table] ?? [];
-
-        return collect($references)->contains(fn (array $r) => $r[0] === $change['table'] && $r[1] === $change['column']);
+        return collect(References::to($table))->contains(fn (Reference $r): bool => $r->table === $change['table'] && $r->column === $change['column']);
     }
 }

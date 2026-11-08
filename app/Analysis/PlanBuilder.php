@@ -2,8 +2,8 @@
 
 namespace App\Analysis;
 
+use App\Instance\HostedResource;
 use App\Instance\Inventory;
-use App\Instance\Resource;
 use App\Instance\Server;
 use App\Instance\Team;
 use App\Security\Decryptor;
@@ -28,7 +28,7 @@ final class PlanBuilder
 
     /**
      * @param  list<Server>  $servers
-     * @param  list<Resource>  $sourceResources
+     * @param  list<HostedResource>  $sourceResources
      */
     public function __construct(
         public readonly ConnectionInterface $db,
@@ -41,6 +41,9 @@ final class PlanBuilder
         public readonly array $sourceResources,
     ) {}
 
+    /**
+     * @param  array<string, int|string>  $key
+     */
     public function change(string $table, array $key, string $column, int|string|null $old, int|string|CopyRef|null $new): void
     {
         $this->changes[] = new RowChange($table, $key, $column, $old, $new);
@@ -51,6 +54,9 @@ final class PlanBuilder
         $this->change($table, ['id' => $id], 'team_id', $this->from->id, $this->to->id);
     }
 
+    /**
+     * @param  array<string, int|string|null>  $overrides
+     */
     public function copy(string $table, int $sourceId, array $overrides = []): CopyRef
     {
         $ref = "{$table}:{$sourceId}";
@@ -90,28 +96,28 @@ final class PlanBuilder
      */
     public function serverIds(): array
     {
-        return array_map(fn (Server $s) => $s->id, $this->servers);
+        return array_map(fn (Server $s): int => $s->id, $this->servers);
     }
 
     /**
-     * @return list<Resource>
+     * @return list<HostedResource>
      */
     public function movingResources(?string $table = null): array
     {
         return array_values(array_filter(
             $this->sourceResources,
-            fn (Resource $r) => $this->isMovingProject($r->projectId) && ($table === null || $r->table === $table),
+            fn (HostedResource $r): bool => $this->isMovingProject($r->projectId) && ($table === null || $r->table === $table),
         ));
     }
 
     /**
-     * @return list<Resource>
+     * @return list<HostedResource>
      */
     public function stayingResources(?string $table = null): array
     {
         return array_values(array_filter(
             $this->sourceResources,
-            fn (Resource $r) => ! $this->isMovingProject($r->projectId) && ($table === null || $r->table === $table),
+            fn (HostedResource $r): bool => ! $this->isMovingProject($r->projectId) && ($table === null || $r->table === $table),
         ));
     }
 

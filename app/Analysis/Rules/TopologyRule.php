@@ -4,11 +4,12 @@ namespace App\Analysis\Rules;
 
 use App\Analysis\IssueLevel;
 use App\Analysis\PlanBuilder;
-use App\Instance\Resource;
+use App\Instance\HostedResource;
+use App\Instance\Server;
 
 final class TopologyRule implements Rule
 {
-    private const ACTIVE_DEPLOYMENT_STATUSES = ['queued', 'in_progress'];
+    private const array ACTIVE_DEPLOYMENT_STATUSES = ['queued', 'in_progress'];
 
     public function apply(PlanBuilder $plan): void
     {
@@ -21,13 +22,13 @@ final class TopologyRule implements Rule
     private function additionalDestinations(PlanBuilder $plan): void
     {
         $movingApps = $this->ids($plan->movingResources('applications'));
-        $sourceApps = $this->ids(array_filter($plan->sourceResources, fn (Resource $r) => $r->table === 'applications'));
+        $sourceApps = $this->ids(array_filter($plan->sourceResources, fn (HostedResource $r): bool => $r->table === 'applications'));
 
         $plan->db->table('additional_destinations as ad')
             ->join('applications as a', 'a.id', '=', 'ad.application_id')
             ->whereIn('ad.application_id', $sourceApps)
             ->get(['ad.application_id', 'ad.server_id', 'a.name'])
-            ->each(function ($row) use ($plan, $movingApps) {
+            ->each(function ($row) use ($plan, $movingApps): void {
                 $appMoves = in_array((int) $row->application_id, $movingApps, true);
                 if ($appMoves !== $plan->isMovingServer((int) $row->server_id)) {
                     $plan->issue(IssueLevel::Blocker, 'split_destinations', sprintf(
@@ -45,12 +46,12 @@ final class TopologyRule implements Rule
             ->where('is_build_server_enabled', true)
             ->exists();
 
-        $movingBuilders = array_filter($plan->servers, fn ($s) => $s->isBuildServer);
+        $movingBuilders = array_filter($plan->servers, fn (Server $s): bool => $s->isBuildServer);
         $stayingBuilders = array_filter(
             $plan->inventory->servers($plan->from->id),
-            fn ($s) => $s->isBuildServer && ! $plan->isMovingServer($s->id),
+            fn (Server $s): bool => $s->isBuildServer && ! $plan->isMovingServer($s->id),
         );
-        $targetBuilders = array_filter($plan->inventory->servers($plan->to->id), fn ($s) => $s->isBuildServer);
+        $targetBuilders = array_filter($plan->inventory->servers($plan->to->id), fn (Server $s): bool => $s->isBuildServer);
 
         if ($movingBuilders !== [] && $stayingBuilders === [] && $usesBuildServer($plan->stayingResources('applications'))) {
             $plan->issue(IssueLevel::Blocker, 'build_server', sprintf(
@@ -69,14 +70,14 @@ final class TopologyRule implements Rule
 
     private function swarm(PlanBuilder $plan): void
     {
-        $isSwarm = fn ($s) => $s->isSwarmManager || $s->isSwarmWorker;
+        $isSwarm = fn ($s): bool => $s->isSwarmManager || $s->isSwarmWorker;
         if (! array_filter($plan->servers, $isSwarm)) {
             return;
         }
 
         $left = array_filter(
             $plan->inventory->servers($plan->from->id),
-            fn ($s) => $isSwarm($s) && ! $plan->isMovingServer($s->id),
+            fn (Server $s): bool => $isSwarm($s) && ! $plan->isMovingServer($s->id),
         );
 
         if ($left !== []) {
@@ -89,7 +90,7 @@ final class TopologyRule implements Rule
 
     private function activeDeployments(PlanBuilder $plan): void
     {
-        $apps = array_map('strval', $this->ids($plan->movingResources('applications')));
+        $apps = array_map(strval(...), $this->ids($plan->movingResources('applications')));
         $active = $plan->db->table('application_deployment_queues')
             ->whereIn('application_id', $apps)
             ->whereIn('status', self::ACTIVE_DEPLOYMENT_STATUSES)
@@ -105,11 +106,11 @@ final class TopologyRule implements Rule
     }
 
     /**
-     * @param  array<Resource>  $resources
+     * @param  array<HostedResource>  $resources
      * @return list<int>
      */
     private function ids(array $resources): array
     {
-        return array_values(array_map(fn (Resource $r) => $r->id, $resources));
+        return array_values(array_map(fn (HostedResource $r): int => $r->id, $resources));
     }
 }

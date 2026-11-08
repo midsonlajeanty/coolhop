@@ -28,9 +28,11 @@
         "laravel/prompts": "^0.3.26"
     },
     "require-dev": {
+        "larastan/larastan": "^3.14",
         "laravel/pint": "^1.30.4",
         "mockery/mockery": "^1.6.12",
-        "pestphp/pest": "^4.7.8 || ^5.0.3"
+        "pestphp/pest": "^4.7.8 || ^5.0.3",
+        "rector/rector": "^2.8"
     },
     "autoload": {
         "psr-4": {
@@ -57,5 +59,17 @@
     "prefer-stable": true,
     "bin": [
         "coolhop"
-    ]
+    ],
+    "scripts": {
+        "lint": [
+            "pint --test",
+            "phpstan analyse --memory-limit=1G",
+            "rector --dry-run"
+        ],
+        "fix": [
+            "rector",
+            "pint"
+        ],
+        "test": "pest"
+    }
 }

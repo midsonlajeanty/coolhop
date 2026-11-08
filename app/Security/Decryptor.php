@@ -24,12 +24,12 @@ final class Decryptor
 
     public function canDecrypt(): bool
     {
-        return $this->encrypter !== null;
+        return $this->encrypter instanceof Encrypter;
     }
 
     public function decrypt(string $payload): ?string
     {
-        if ($this->encrypter === null) {
+        if (! $this->encrypter instanceof Encrypter) {
             return null;
         }
 

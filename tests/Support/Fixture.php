@@ -6,7 +6,7 @@ use Illuminate\Encryption\Encrypter;
 
 final class Fixture
 {
-    public const APP_KEY = 'base64:a2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2s=';
+    public const string APP_KEY = 'base64:a2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2s=';
 
     public static function insert(string $table, array $values): int
     {
@@ -15,7 +15,7 @@ final class Fixture
             'insert into %s (%s) values (%s) returning id',
             $table,
             implode(', ', $columns),
-            implode(', ', array_map(fn ($c) => ':'.$c, $columns)),
+            implode(', ', array_map(fn (int|string $c): string => ':'.$c, $columns)),
         );
         $statement = Database::pdo()->prepare($sql);
         $statement->execute($values);
@@ -25,7 +25,7 @@ final class Fixture
 
     public static function team(string $name, ?int $id = null): int
     {
-        return self::insert('teams', array_filter(['id' => $id, 'name' => $name], fn ($v) => $v !== null));
+        return self::insert('teams', array_filter(['id' => $id, 'name' => $name], fn (int|string|null $v): bool => $v !== null));
     }
 
     public static function server(int $teamId, string $name, ?int $privateKeyId = null, array $settings = [], ?int $id = null): int
@@ -170,7 +170,7 @@ final class Fixture
             'database_type' => 'App\Models\\'.self::morphClass($databaseTable),
             'database_id' => $databaseId,
             's3_storage_id' => $s3Id,
-        ], fn ($v) => $v !== null));
+        ], fn (string|int|null $v): bool => $v !== null));
     }
 
     public static function sharedVariable(int $teamId, string $type, string $key, array $scope = [], string $value = 'value'): int
@@ -229,7 +229,7 @@ final class Fixture
 
     public static function encrypt(string $value): string
     {
-        return (new Encrypter(base64_decode(substr(self::APP_KEY, 7)), 'aes-256-cbc'))->encryptString($value);
+        return new Encrypter(base64_decode(substr(self::APP_KEY, 7)), 'aes-256-cbc')->encryptString($value);
     }
 
     public static function uuid(): string

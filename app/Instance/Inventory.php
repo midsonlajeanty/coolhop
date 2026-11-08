@@ -7,25 +7,25 @@ use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Query\JoinClause;
 use InvalidArgumentException;
 
-final class Inventory
+final readonly class Inventory
 {
-    public const LOCALHOST_SERVER_ID = 0;
+    public const int LOCALHOST_SERVER_ID = 0;
 
-    public function __construct(private readonly ConnectionInterface $db) {}
+    public function __construct(private ConnectionInterface $db) {}
 
     /**
      * @return list<Team>
      */
     public function teams(): array
     {
-        return $this->db->table('teams')->orderBy('id')->get(['id', 'name'])
-            ->map(fn ($row) => new Team((int) $row->id, $row->name))
-            ->all();
+        return array_values($this->db->table('teams')->orderBy('id')->get(['id', 'name'])
+            ->map(fn ($row): Team => new Team((int) $row->id, $row->name))
+            ->all());
     }
 
     public function team(int $id): Team
     {
-        $row = $this->db->table('teams')->find($id, ['id', 'name']);
+        $row = $this->db->table('teams')->where('id', $id)->first(['id', 'name']);
 
         return $row ? new Team((int) $row->id, $row->name) : throw new InvalidArgumentException("Team {$id} does not exist.");
     }
@@ -35,13 +35,13 @@ final class Inventory
      */
     public function servers(?int $teamId = null): array
     {
-        return $this->db->table('servers as s')
+        return array_values($this->db->table('servers as s')
             ->leftJoin('server_settings as ss', 'ss.server_id', '=', 's.id')
             ->where('s.id', '<>', self::LOCALHOST_SERVER_ID)
             ->when($teamId !== null, fn ($q) => $q->where('s.team_id', $teamId))
             ->orderBy('s.id')
             ->get(['s.*', 'ss.is_build_server', 'ss.is_swarm_manager', 'ss.is_swarm_worker'])
-            ->map(fn ($row) => new Server(
+            ->map(fn ($row): Server => new Server(
                 id: (int) $row->id,
                 uuid: $row->uuid,
                 name: $row->name,
@@ -53,28 +53,28 @@ final class Inventory
                 isSwarmManager: (bool) $row->is_swarm_manager,
                 isSwarmWorker: (bool) $row->is_swarm_worker,
             ))
-            ->all();
+            ->all());
     }
 
     /**
-     * @return list<Resource>
+     * @return list<HostedResource>
      */
     public function resourcesOfTeam(int $teamId): array
     {
-        return collect(array_keys(KnownSchema::RESOURCE_TABLES))
-            ->flatMap(fn (string $table) => $this->resourcesIn($table, $teamId))
-            ->values()
-            ->all();
+        return array_merge(...array_map(
+            fn (string $table): array => $this->resourcesIn($table, $teamId),
+            array_keys(KnownSchema::RESOURCE_TABLES),
+        ));
     }
 
     /**
-     * @return list<Resource>
+     * @return list<HostedResource>
      */
     private function resourcesIn(string $table, int $teamId): array
     {
         [$standalone, $swarm] = array_keys(KnownSchema::DESTINATION_TYPES);
 
-        return $this->db->table("{$table} as r")
+        return array_values($this->db->table("{$table} as r")
             ->join('environments as e', 'e.id', '=', 'r.environment_id')
             ->join('projects as p', 'p.id', '=', 'e.project_id')
             ->leftJoin('standalone_dockers as sd', fn (JoinClause $j) => $j->on('sd.id', '=', 'r.destination_id')->where('r.destination_type', $standalone))
@@ -83,7 +83,7 @@ final class Inventory
             ->where('p.team_id', $teamId)
             ->orderBy('r.id')
             ->get(['r.id', 'r.name', 'r.environment_id', 'r.destination_type', 'e.project_id', 'p.team_id', 'sd.server_id as standalone_server_id', 'sw.server_id as swarm_server_id'])
-            ->map(fn ($row) => new Resource(
+            ->map(fn ($row): HostedResource => new HostedResource(
                 table: $table,
                 id: (int) $row->id,
                 name: $row->name,
@@ -93,6 +93,6 @@ final class Inventory
                 serverId: ($server = $row->standalone_server_id ?? $row->swarm_server_id) === null ? null : (int) $server,
                 unknownDestinationType: isset(KnownSchema::DESTINATION_TYPES[$row->destination_type]) ? null : $row->destination_type,
             ))
-            ->all();
+            ->all());
     }
 }

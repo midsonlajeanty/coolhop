@@ -5,11 +5,11 @@ namespace App\Analysis\Rules;
 use App\Analysis\IssueLevel;
 use App\Analysis\PlanBuilder;
 use App\Analysis\TeamVariablePolicy;
-use App\Instance\Resource;
+use App\Instance\HostedResource;
 
 final class SharedVariableRule implements Rule
 {
-    private const TEAM_REFERENCE = '/\{\{\s*team\.([A-Za-z0-9_]+)\s*\}\}/';
+    private const string TEAM_REFERENCE = '/\{\{\s*team\.([A-Za-z0-9_]+)\s*\}\}/';
 
     public function apply(PlanBuilder $plan): void
     {
@@ -80,13 +80,13 @@ final class SharedVariableRule implements Rule
         }
 
         $keys = [];
-        foreach (collect($plan->movingResources())->groupBy(fn (Resource $r) => $r->morphClass()) as $morph => $resources) {
+        foreach (collect($plan->movingResources())->groupBy(fn (HostedResource $r): string => $r->morphClass()) as $morph => $resources) {
             $plan->db->table('environment_variables')
                 ->where('resourceable_type', $morph)
                 ->whereIn('resourceable_id', $resources->pluck('id'))
                 ->whereNotNull('value')
                 ->pluck('value')
-                ->each(function (string $payload) use ($plan, &$keys) {
+                ->each(function (string $payload) use ($plan, &$keys): void {
                     preg_match_all(self::TEAM_REFERENCE, $plan->decryptor->decrypt($payload) ?? '', $matches);
                     array_push($keys, ...$matches[1]);
                 });

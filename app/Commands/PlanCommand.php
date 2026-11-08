@@ -41,9 +41,9 @@ class PlanCommand extends Command
         $guard = SchemaGuard::check($db);
 
         if ($this->option('json')) {
-            $this->line(json_encode(PlanJson::from($plan, $guard), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            $this->line(json_encode(PlanJson::from($plan, $guard), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
         } else {
-            (new PlanRenderer($db))->render($plan, $this->output, $guard);
+            new PlanRenderer($db)->render($plan, $this->output, $guard);
         }
 
         return $plan->hasBlockers() ? self::FAILURE : self::SUCCESS;

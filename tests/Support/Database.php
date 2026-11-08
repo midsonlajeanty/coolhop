@@ -6,7 +6,7 @@ use PDO;
 
 final class Database
 {
-    private const DEFAULT_URL = 'pgsql:host=127.0.0.1;port=54329;dbname=coolify;user=postgres;password=x';
+    private const string DEFAULT_URL = 'pgsql:host=127.0.0.1;port=54329;dbname=coolify;user=postgres;password=x';
 
     private static ?PDO $pdo = null;
 
@@ -14,7 +14,7 @@ final class Database
 
     public static function pdo(): PDO
     {
-        if (self::$pdo === null) {
+        if (! self::$pdo instanceof PDO) {
             self::$pdo = new PDO(getenv('COOLHOP_TEST_DB_URL') ?: self::DEFAULT_URL, options: [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,

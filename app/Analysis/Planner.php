@@ -2,25 +2,25 @@
 
 namespace App\Analysis;
 
+use App\Analysis\Rules\NoticeRule;
 use App\Analysis\Rules\ProjectRule;
 use App\Analysis\Rules\Rule;
-use App\Analysis\Rules\NoticeRule;
 use App\Analysis\Rules\ServerRule;
 use App\Analysis\Rules\SharedItemRule;
 use App\Analysis\Rules\SharedVariableRule;
 use App\Analysis\Rules\TagRule;
-use App\Analysis\Rules\UnusedItemRule;
 use App\Analysis\Rules\TopologyRule;
+use App\Analysis\Rules\UnusedItemRule;
 use App\Instance\Inventory;
 use App\Instance\Server;
 use App\Security\Decryptor;
 use Illuminate\Database\ConnectionInterface;
 use InvalidArgumentException;
 
-final class Planner
+final readonly class Planner
 {
     /** @var list<class-string<Rule>> */
-    public const RULES = [
+    public const array RULES = [
         ServerRule::class,
         ProjectRule::class,
         TopologyRule::class,
@@ -31,11 +31,11 @@ final class Planner
         NoticeRule::class,
     ];
 
-    private readonly Inventory $inventory;
+    private Inventory $inventory;
 
-    private readonly Decryptor $decryptor;
+    private Decryptor $decryptor;
 
-    public function __construct(private readonly ConnectionInterface $db, ?Decryptor $decryptor = null)
+    public function __construct(private ConnectionInterface $db, ?Decryptor $decryptor = null)
     {
         $this->inventory = new Inventory($db);
         $this->decryptor = $decryptor ?? Decryptor::fromEnvironment();

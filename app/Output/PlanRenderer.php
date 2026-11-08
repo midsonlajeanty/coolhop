@@ -3,6 +3,7 @@
 namespace App\Output;
 
 use App\Analysis\CopyRef;
+use App\Analysis\Issue;
 use App\Analysis\IssueLevel;
 use App\Analysis\MovePlan;
 use App\Analysis\RowChange;
@@ -10,9 +11,9 @@ use App\Schema\GuardResult;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Database\ConnectionInterface;
 
-final class PlanRenderer
+final readonly class PlanRenderer
 {
-    private const LABELS = [
+    private const array LABELS = [
         'servers' => 'servers',
         'projects' => 'projects',
         'private_keys' => 'private keys',
@@ -29,7 +30,7 @@ final class PlanRenderer
         'tags' => 'tags',
     ];
 
-    public function __construct(private readonly ConnectionInterface $db) {}
+    public function __construct(private ConnectionInterface $db) {}
 
     public function render(MovePlan $plan, OutputStyle $out, ?GuardResult $guard = null): void
     {
@@ -42,8 +43,8 @@ final class PlanRenderer
         $this->issues($out, 'Warnings', 'yellow', $plan->issuesAt(IssueLevel::Warning));
         $this->issues($out, 'After the move', 'yellow', $plan->issuesAt(IssueLevel::AfterMove));
 
-        if ($guard !== null && ! $guard->canApply()) {
-            $this->issues($out, 'Schema', 'red', [$this->guardMessage($guard)]);
+        if ($guard instanceof GuardResult && ! $guard->canApply()) {
+            $this->issues($out, 'Schema', 'red', [self::guardMessage($guard)]);
         }
     }
 
@@ -63,14 +64,14 @@ final class PlanRenderer
             $out->writeln("  • server {$server->name} ({$server->ip})");
         }
 
-        $projects = collect($plan->changes)->filter(fn (RowChange $c) => $c->table === 'projects')->map(fn (RowChange $c) => $c->key['id']);
+        $projects = collect($plan->changes)->filter(fn (RowChange $c): bool => $c->table === 'projects')->map(fn (RowChange $c): int|string => $c->key['id']);
         foreach ($this->db->table('projects')->whereIn('id', $projects)->orderBy('name')->pluck('name') as $name) {
             $out->writeln("  • project {$name}");
         }
 
         $counts = collect($plan->changes)
-            ->reject(fn (RowChange $c) => in_array($c->table, ['servers', 'projects'], true))
-            ->groupBy(fn (RowChange $c) => $c->new instanceof CopyRef ? 'repointed '.$this->label($c->table) : $this->label($c->table))
+            ->reject(fn (RowChange $c): bool => in_array($c->table, ['servers', 'projects'], true))
+            ->groupBy(fn (RowChange $c): string => $c->new instanceof CopyRef ? 'repointed '.$this->label($c->table) : $this->label($c->table))
             ->map->count();
         foreach ($counts as $label => $count) {
             $out->writeln("  • {$count} {$label}");
@@ -83,7 +84,7 @@ final class PlanRenderer
     }
 
     /**
-     * @param  list<\App\Analysis\Issue|string>  $issues
+     * @param  list<Issue|string>  $issues
      */
     private function issues(OutputStyle $out, string $title, string $color, array $issues): void
     {

@@ -14,11 +14,11 @@ use Tests\Support\Fixture;
 function snapshot(): array
 {
     return collect(['servers', 'projects', 'private_keys', 'tags', 'taggables', 'shared_environment_variables'])
-        ->mapWithKeys(fn ($t) => [$t => DB::table($t)->get()->map(fn ($r) => (array) $r)->sortBy(fn ($r) => json_encode($r))->values()->all()])
+        ->mapWithKeys(fn ($t): array => [$t => DB::table($t)->get()->map(fn ($r): array => (array) $r)->sortBy(fn ($r): string|false => json_encode($r))->values()->all()])
         ->all();
 }
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->home = sys_get_temp_dir().'/coolhop-test-'.bin2hex(random_bytes(4));
     mkdir($this->home);
     $this->backup = $this->home.'/coolify.dump';
@@ -36,14 +36,14 @@ beforeEach(function () {
     $planner = new Planner(DB::connection(), new Decryptor(Fixture::APP_KEY));
     $request = new MoveRequest($this->a, $this->b, [$this->s1]);
     $this->before = snapshot();
-    $this->journal = (new Applier(DB::connection(), $planner, new CacheClearer('/nonexistent'), $this->home))
+    $this->journal = new Applier(DB::connection(), $planner, new CacheClearer('/nonexistent'), $this->home)
         ->apply($request, $planner->plan($request)->fingerprint(), $this->backup);
     $this->rollback = new Rollback(DB::connection(), new CacheClearer('/nonexistent'), $this->home);
 });
 
-afterEach(fn () => exec('rm -rf '.escapeshellarg($this->home)));
+afterEach(fn (): string|false => exec('rm -rf '.escapeshellarg($this->home)));
 
-it('restores the previous state', function () {
+it('restores the previous state', function (): void {
     $this->rollback->run($this->journal, $this->backup);
 
     $after = snapshot();
@@ -54,7 +54,7 @@ it('restores the previous state', function () {
         ->and(Journal::fromFile(Journal::path($this->home, $this->journal->id))->rolledBackAt)->not->toBeNull();
 });
 
-it('refuses when a row changed since the move', function () {
+it('refuses when a row changed since the move', function (): void {
     DB::table('servers')->where('id', $this->s1)->update(['team_id' => $this->a]);
 
     expect(fn () => $this->rollback->run($this->journal, $this->backup))->toThrow(RollbackConflict::class, 'servers');
@@ -62,14 +62,14 @@ it('refuses when a row changed since the move', function () {
     expect(DB::table('projects')->where('team_id', $this->b)->count())->toBe(1);
 });
 
-it('refuses when a copy is now used by something new', function () {
+it('refuses when a copy is now used by something new', function (): void {
     $copy = DB::table('servers')->find($this->s1)->private_key_id;
     Fixture::server($this->b, 'New', $copy);
 
     expect(fn () => $this->rollback->run($this->journal, $this->backup))->toThrow(RollbackConflict::class, 'private_keys');
 });
 
-it('refuses to roll back twice', function () {
+it('refuses to roll back twice', function (): void {
     $this->rollback->run($this->journal, $this->backup);
 
     $journal = Journal::fromFile(Journal::path($this->home, $this->journal->id));
@@ -77,6 +77,6 @@ it('refuses to roll back twice', function () {
     expect(fn () => $this->rollback->run($journal, $this->backup))->toThrow(RollbackConflict::class, 'already rolled back');
 });
 
-it('requires a fresh backup', function () {
+it('requires a fresh backup', function (): void {
     expect(fn () => $this->rollback->run($this->journal, null))->toThrow(RuntimeException::class, 'Backup missing');
 });

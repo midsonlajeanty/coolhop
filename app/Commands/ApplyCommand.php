@@ -9,8 +9,8 @@ use App\Instance\Inventory;
 use App\Output\PlanRenderer;
 use App\Schema\SchemaGuard;
 use Illuminate\Database\ConnectionInterface;
-use InvalidArgumentException;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use LaravelZero\Framework\Commands\Command;
 use RuntimeException;
 
@@ -37,7 +37,7 @@ class ApplyCommand extends Command
         }
 
         $guard = SchemaGuard::check($db);
-        
+
         if (! $guard->canApply()) {
             $this->error('Refusing to apply on this schema. '.PlanRenderer::guardMessage($guard));
 
@@ -53,7 +53,7 @@ class ApplyCommand extends Command
             return PlanCommand::INVALID;
         }
 
-        (new PlanRenderer($db))->render($plan, $this->output);
+        new PlanRenderer($db)->render($plan, $this->output);
 
         try {
             $journal = $applier->apply($request, $plan->fingerprint(), getenv('COOLHOP_BACKUP') ?: null);

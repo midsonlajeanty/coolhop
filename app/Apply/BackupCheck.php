@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Apply;
 
 use RuntimeException;
 
 final class BackupCheck
 {
-    public const MAX_AGE_SECONDS = 3600;
+    public const int MAX_AGE_SECONDS = 3600;
 
     public static function assertFresh(?string $path, int $maxAgeSeconds = self::MAX_AGE_SECONDS): void
     {
