@@ -47,7 +47,7 @@ final readonly class Rollback
                 $this->db->statement("set local lock_timeout = '5s'");
 
                 $conflicts = [...$this->changedRows($journal), ...$this->usedCopies($journal)];
-                if ($conflicts === []) {
+                if ($conflicts === [] && ($journal->request['kind'] ?? null) !== HistoryMover::KIND) {
                     $conflicts = [...$this->drift($journal), ...$this->usedTeamVariables($journal)];
                 }
                 if ($conflicts !== []) {

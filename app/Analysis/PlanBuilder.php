@@ -152,6 +152,21 @@ final class PlanBuilder
         return $this->db->table('servers')->where('id', $serverId)->value('name') ?? 'unknown server';
     }
 
+    /**
+     * @return array<string, list<int>>
+     */
+    public function movedIds(): array
+    {
+        $moved = [];
+        foreach ($this->changes as $change) {
+            if ($change->column === 'team_id' && isset($change->key['id'])) {
+                $moved[$change->table][] = (int) $change->key['id'];
+            }
+        }
+
+        return $moved;
+    }
+
     public function build(): MovePlan
     {
         return new MovePlan($this->from, $this->to, $this->servers, $this->changes, array_values($this->copies), $this->issues, $this->unused);

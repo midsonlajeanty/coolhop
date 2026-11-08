@@ -28,6 +28,7 @@ final readonly class PlanRenderer
         'shared_environment_variables' => 'shared variables',
         'taggables' => 'tag links',
         'tags' => 'tags',
+        'audit_events' => 'audit events',
     ];
 
     public function __construct(private ConnectionInterface $db) {}

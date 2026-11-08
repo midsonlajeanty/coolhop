@@ -227,6 +227,26 @@ final class Fixture
         ]);
     }
 
+    public static function auditEvent(int $teamId, string $resourceType, ?string $resourceUuid, array $metadata = []): int
+    {
+        return self::insert('audit_events', [
+            'team_id' => $teamId,
+            'event' => "ui.{$resourceType}.updated",
+            'source' => 'ui',
+            'action' => 'updated',
+            'actor_type' => 'user',
+            'resource_type' => $resourceType,
+            'resource_uuid' => $resourceUuid,
+            'description' => 'test event',
+            'metadata' => json_encode($metadata),
+        ]);
+    }
+
+    public static function uuidOf(string $table, int $id): string
+    {
+        return (string) Database::pdo()->query("select uuid from {$table} where id = {$id}")->fetchColumn();
+    }
+
     public static function encrypt(string $value): string
     {
         return new Encrypter(base64_decode(substr(self::APP_KEY, 7)), 'aes-256-cbc')->encryptString($value);

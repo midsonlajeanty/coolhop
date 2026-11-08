@@ -2,6 +2,7 @@
 
 namespace App\Analysis;
 
+use App\Analysis\Rules\AuditEventRule;
 use App\Analysis\Rules\NoticeRule;
 use App\Analysis\Rules\ProjectRule;
 use App\Analysis\Rules\Rule;
@@ -29,6 +30,7 @@ final readonly class Planner
         SharedVariableRule::class,
         TagRule::class,
         NoticeRule::class,
+        AuditEventRule::class,
     ];
 
     private Inventory $inventory;
