@@ -10,7 +10,7 @@ use Symfony\Component\Console\Command\DumpCompletionCommand;
 use Symfony\Component\Console\Command\HelpCommand;
 
 return [
-    'default' => SummaryCommand::class,
+    'default' => App\Commands\HopCommand::class,
     'paths' => [app_path('Commands')],
     'add' => [],
     'hidden' => [
