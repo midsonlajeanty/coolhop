@@ -4,12 +4,16 @@ namespace App\Analysis;
 
 use App\Analysis\Rules\ProjectRule;
 use App\Analysis\Rules\Rule;
+use App\Analysis\Rules\NoticeRule;
 use App\Analysis\Rules\ServerRule;
 use App\Analysis\Rules\SharedItemRule;
+use App\Analysis\Rules\SharedVariableRule;
+use App\Analysis\Rules\TagRule;
 use App\Analysis\Rules\UnusedItemRule;
 use App\Analysis\Rules\TopologyRule;
 use App\Instance\Inventory;
 use App\Instance\Server;
+use App\Security\Decryptor;
 use Illuminate\Database\ConnectionInterface;
 use InvalidArgumentException;
 
@@ -22,13 +26,19 @@ final class Planner
         TopologyRule::class,
         SharedItemRule::class,
         UnusedItemRule::class,
+        SharedVariableRule::class,
+        TagRule::class,
+        NoticeRule::class,
     ];
 
     private readonly Inventory $inventory;
 
-    public function __construct(private readonly ConnectionInterface $db)
+    private readonly Decryptor $decryptor;
+
+    public function __construct(private readonly ConnectionInterface $db, ?Decryptor $decryptor = null)
     {
         $this->inventory = new Inventory($db);
+        $this->decryptor = $decryptor ?? Decryptor::fromEnvironment();
     }
 
     public function plan(MoveRequest $request): MovePlan
@@ -47,6 +57,7 @@ final class Planner
         $builder = new PlanBuilder(
             $this->db,
             $this->inventory,
+            $this->decryptor,
             $request,
             $from,
             $to,

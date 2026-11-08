@@ -6,6 +6,7 @@ use App\Instance\Inventory;
 use App\Instance\Resource;
 use App\Instance\Server;
 use App\Instance\Team;
+use App\Security\Decryptor;
 use Illuminate\Database\ConnectionInterface;
 
 final class PlanBuilder
@@ -32,6 +33,7 @@ final class PlanBuilder
     public function __construct(
         public readonly ConnectionInterface $db,
         public readonly Inventory $inventory,
+        public readonly Decryptor $decryptor,
         public readonly MoveRequest $request,
         public readonly Team $from,
         public readonly Team $to,
