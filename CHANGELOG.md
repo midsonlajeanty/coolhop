@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/midsonlajeanty/coolhop/compare/v0.1.0...v0.2.0) (2026-11-08)
+
+
+### Features
+
+* move the audit history with the servers ([#4](https://github.com/midsonlajeanty/coolhop/issues/4)) ([e11ab14](https://github.com/midsonlajeanty/coolhop/commit/e11ab1411848a8adfd2c6213beda018acbeb09a3))
+
 ## 0.1.0 (2026-11-08)
 
 
