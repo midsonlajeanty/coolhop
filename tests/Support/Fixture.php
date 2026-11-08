@@ -51,7 +51,7 @@ final class Fixture
         return self::insert('standalone_dockers', [
             'uuid' => self::uuid(),
             'name' => 'coolify',
-            'network' => 'coolify',
+            'network' => 'coolify-'.self::uuid(),
             'server_id' => $serverId,
         ]);
     }

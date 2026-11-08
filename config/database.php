@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'useDefaultProvider' => false,
     'default' => 'coolify',
     'connections' => [
         'coolify' => [
