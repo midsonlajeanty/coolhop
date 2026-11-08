@@ -63,6 +63,7 @@ Moves
   • 4 private keys
   • 1 database backups
   • 7 tags copied into Platform
+  • 439 audit events
 
 Warnings
   • Platform already has a project named "monitoring". Both will exist side by side.
@@ -82,6 +83,7 @@ A move takes the selected servers and everything they carry:
 - database backups, volume backups and scheduled tasks
 - server, project and environment variables, plus the team variables (`{{team.X}}`) the moved resources reference
 - tags
+- the audit history of all of the above, so the target team sees what happened on those servers
 
 coolhop never touches:
 
@@ -126,6 +128,7 @@ $coolhop | bash -s -- teams
 $coolhop | bash -s -- plan  --from=Agency --to=Platform --server=web-1 --server=web-2
 $coolhop | bash -s -- apply --from=Agency --to=Platform --server=web-1 --server=web-2 --yes --fingerprint=<printed by plan>
 $coolhop | bash -s -- rollback <journal-id> --yes
+$coolhop | bash -s -- history <journal-id> --yes
 ```
 
 | Command | What it does |
@@ -135,6 +138,7 @@ $coolhop | bash -s -- rollback <journal-id> --yes
 | `plan` | Shows what a move would change, writes nothing |
 | `apply` | Moves the servers |
 | `rollback` | Undoes a move recorded in a journal |
+| `history` | Moves the audit history left behind by a move made with coolhop 0.1.0 |
 
 | Option | Meaning |
 |---|---|
