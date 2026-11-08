@@ -6,7 +6,7 @@
       "package-name": "coolhop",
       "changelog-path": "CHANGELOG.md",
       "bump-minor-pre-major": true,
-      "release-as": "0.1.0"
+      "include-component-in-tag": false
     }
   }
 }
