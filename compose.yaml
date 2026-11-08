@@ -1,0 +1,8 @@
+services:
+  pg:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: x
+      POSTGRES_DB: coolify
+    ports:
+      - "54329:5432"

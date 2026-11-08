@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+container="${1:?usage: bin/dump-schema <postgres-container>}"
+out="$(dirname "$0")/../tests/fixtures/schema.sql"
+
+{
+  docker exec "$container" pg_dump -U postgres -d coolify --schema-only --no-owner --no-privileges --no-comments
+  docker exec "$container" pg_dump -U postgres -d coolify --data-only --no-owner -t public.migrations --inserts
+} | grep -vE '^(\\restrict|\\unrestrict|--)' | cat -s > "$out"
+
+echo "wrote $out"

@@ -1,0 +1,60 @@
+{
+    "name": "midsonlajeanty/coolhop",
+    "description": "Move servers between Coolify teams, zero downtime.",
+    "keywords": [
+        "coolify",
+        "cli",
+        "self-hosting"
+    ],
+    "homepage": "https://github.com/midsonlajeanty/coolhop",
+    "type": "project",
+    "license": "MIT",
+    "support": {
+        "issues": "https://github.com/midsonlajeanty/coolhop/issues",
+        "source": "https://github.com/midsonlajeanty/coolhop"
+    },
+    "authors": [
+        {
+            "name": "Midson Lajeanty",
+            "email": "louismidsonlajeanty@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.4",
+        "illuminate/encryption": "^13.40",
+        "laravel-zero/foundation": "^13.23",
+        "laravel-zero/framework": "^13.0",
+        "laravel/prompts": "^0.3.26"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.30.4",
+        "mockery/mockery": "^1.6.12",
+        "pestphp/pest": "^4.7.8 || ^5.0.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        },
+        "platform": {
+            "php": "8.4.0"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "bin": [
+        "coolhop"
+    ]
+}
