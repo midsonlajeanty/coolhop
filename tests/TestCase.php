@@ -3,8 +3,6 @@
 namespace Tests;
 
 use LaravelZero\Framework\Testing\TestCase as BaseTestCase;
-use PDO;
-use Tests\Support\Database;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -12,6 +10,13 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        $this->app->instance(PDO::class, Database::pdo());
+        config()->set('database.connections.coolify', [
+            ...config('database.connections.coolify'),
+            'host' => '127.0.0.1',
+            'port' => getenv('COOLHOP_TEST_DB_PORT') ?: '54329',
+            'database' => 'coolify',
+            'username' => 'postgres',
+            'password' => 'x',
+        ]);
     }
 }

@@ -1,11 +1,12 @@
 <?php
 
 use App\Instance\Inventory;
+use Illuminate\Support\Facades\DB;
 use Tests\Support\Database;
 use Tests\Support\Fixture;
 
 beforeEach(function () {
-    $this->inventory = new Inventory(Database::pdo());
+    $this->inventory = new Inventory(DB::connection());
 });
 
 it('lists teams', function () {
