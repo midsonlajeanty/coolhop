@@ -30,7 +30,9 @@ jobs:
         run: echo "tag=$(gh api repos/coollabsio/coolify/releases/latest --jq .tag_name)" >> "$GITHUB_OUTPUT"
       - env:
           TAG: ${{ steps.latest.outputs.tag }}
-        run: bin/dump-schema --upstream "$TAG"
+        run: |
+          bin/dump-schema --upstream "$TAG"
+          git checkout -- app/Schema/ReferenceColumns.php
       - run: |
           docker run -d --name upstream-check -p 54330:5432 -e POSTGRES_PASSWORD=x -e POSTGRES_DB=coolify postgres:15
           until docker exec upstream-check pg_isready -U postgres -d coolify; do sleep 1; done

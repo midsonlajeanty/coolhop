@@ -11,6 +11,11 @@ use Illuminate\Database\ConnectionInterface;
 
 final class PlanBuilder
 {
+    private const array SERVICE_PARTS = [
+        'service_applications' => 'App\\Models\\ServiceApplication',
+        'service_databases' => 'App\\Models\\ServiceDatabase',
+    ];
+
     /** @var list<RowChange> */
     private array $changes = [];
 
@@ -97,6 +102,27 @@ final class PlanBuilder
     public function serverIds(): array
     {
         return array_map(fn (Server $s): int => $s->id, $this->servers);
+    }
+
+    /**
+     * @return array<string, list<int>>
+     */
+    public function movingMorphs(): array
+    {
+        $morphs = [];
+        foreach ($this->movingResources() as $resource) {
+            $morphs[$resource->morphClass()][] = $resource->id;
+        }
+
+        $services = array_map(fn (HostedResource $r): int => $r->id, $this->movingResources('services'));
+        foreach (self::SERVICE_PARTS as $table => $morph) {
+            $ids = $this->db->table($table)->whereIn('service_id', $services)->orderBy('id')->pluck('id')->map(fn ($id): int => (int) $id)->all();
+            if ($ids !== []) {
+                $morphs[$morph] = array_values($ids);
+            }
+        }
+
+        return $morphs;
     }
 
     /**

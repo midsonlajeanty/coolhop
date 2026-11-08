@@ -5,7 +5,6 @@ namespace App\Analysis\Rules;
 use App\Analysis\IssueLevel;
 use App\Analysis\PlanBuilder;
 use App\Analysis\TeamVariablePolicy;
-use App\Instance\HostedResource;
 
 final class SharedVariableRule implements Rule
 {
@@ -80,16 +79,31 @@ final class SharedVariableRule implements Rule
         }
 
         $keys = [];
-        foreach (collect($plan->movingResources())->groupBy(fn (HostedResource $r): string => $r->morphClass()) as $morph => $resources) {
-            $plan->db->table('environment_variables')
+        $undecryptable = 0;
+        foreach ($plan->movingMorphs() as $morph => $ids) {
+            $payloads = $plan->db->table('environment_variables')
                 ->where('resourceable_type', $morph)
-                ->whereIn('resourceable_id', $resources->pluck('id'))
+                ->whereIn('resourceable_id', $ids)
                 ->whereNotNull('value')
-                ->pluck('value')
-                ->each(function (string $payload) use ($plan, &$keys): void {
-                    preg_match_all(self::TEAM_REFERENCE, $plan->decryptor->decrypt($payload) ?? '', $matches);
-                    array_push($keys, ...$matches[1]);
-                });
+                ->pluck('value');
+
+            foreach ($payloads as $payload) {
+                $value = $plan->decryptor->decrypt((string) $payload);
+                if ($value === null) {
+                    $undecryptable++;
+
+                    continue;
+                }
+                preg_match_all(self::TEAM_REFERENCE, $value, $matches);
+                array_push($keys, ...$matches[1]);
+            }
+        }
+
+        if ($undecryptable > 0) {
+            $plan->issue(IssueLevel::Warning, 'undecryptable_values', sprintf(
+                '%d environment variable values of moving resources could not be decrypted with APP_KEY, so their {{team.X}} references were not checked.',
+                $undecryptable,
+            ));
         }
 
         $keys = array_values(array_unique($keys));

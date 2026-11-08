@@ -2,7 +2,9 @@
 set -euo pipefail
 
 usage="usage: bin/dump-schema <postgres-container> | --upstream <coolify-version>"
-out="$(cd "$(dirname "$0")/.." && pwd)/tests/fixtures/schema.sql"
+root="$(cd "$(dirname "$0")/.." && pwd)"
+out="${root}/tests/fixtures/schema.sql"
+references="${root}/app/Schema/ReferenceColumns.php"
 
 dump() {
   {
@@ -10,6 +12,15 @@ dump() {
     docker exec "$1" pg_dump -U postgres -d coolify --data-only --no-owner -t public.migrations --inserts
   } | grep -vE '^(\\restrict|\\unrestrict|--)' | cat -s > "$out"
   echo "wrote $out"
+
+  {
+    printf '<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Schema;\n\nfinal class ReferenceColumns\n{\n    public const array ALL = [\n'
+    docker exec "$1" psql -U postgres -d coolify -Atc \
+      "select table_name || '.' || column_name from information_schema.columns where table_schema = 'public' and (column_name like '%\\_id' or column_name like '%\\_type') order by 1" \
+      | sed "s/.*/        '&',/"
+    printf '    ];\n}\n'
+  } > "$references"
+  echo "wrote $references"
 }
 
 upstream() {

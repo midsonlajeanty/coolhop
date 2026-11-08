@@ -4,7 +4,6 @@ namespace App\Analysis\Rules;
 
 use App\Analysis\IssueLevel;
 use App\Analysis\PlanBuilder;
-use App\Instance\HostedResource;
 
 final class NoticeRule implements Rule
 {
@@ -29,8 +28,7 @@ final class NoticeRule implements Rule
     {
         $found = [];
 
-        foreach (collect($plan->movingResources())->groupBy(fn (HostedResource $r): string => $r->morphClass()) as $morph => $resources) {
-            $ids = $resources->pluck('id');
+        foreach ($plan->movingMorphs() as $morph => $ids) {
             if ($plan->db->table('secret_manager_links')->where('resourceable_type', $morph)->whereIn('resourceable_id', $ids)->exists()) {
                 $found[] = 'secret manager links';
             }

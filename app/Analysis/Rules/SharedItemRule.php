@@ -31,7 +31,7 @@ final class SharedItemRule implements Rule
 
     private function moveScheduledRows(PlanBuilder $plan): void
     {
-        $byMorph = collect($plan->movingResources())->groupBy(fn (HostedResource $r): string => $r->morphClass());
+        $byMorph = $plan->movingMorphs();
 
         $databaseBackups = $this->rowsMatchingMorph($plan, 'scheduled_database_backups', 'database_type', 'database_id', $byMorph);
         $volumeBackups = $this->rowsMatchingMorph($plan, 'scheduled_volume_backups', 'backupable_type', 'backupable_id', $byMorph);
@@ -133,20 +133,20 @@ final class SharedItemRule implements Rule
     }
 
     /**
-     * @param  Collection<string, Collection<int, HostedResource>>  $byMorph
+     * @param  array<string, list<int>>  $byMorph
      * @return list<int>
      */
-    private function rowsMatchingMorph(PlanBuilder $plan, string $table, string $typeColumn, string $idColumn, Collection $byMorph): array
+    private function rowsMatchingMorph(PlanBuilder $plan, string $table, string $typeColumn, string $idColumn, array $byMorph): array
     {
-        if ($byMorph->isEmpty()) {
+        if ($byMorph === []) {
             return [];
         }
 
         return array_values($plan->db->table($table)
             ->where('team_id', $plan->from->id)
             ->where(function ($q) use ($byMorph, $typeColumn, $idColumn): void {
-                foreach ($byMorph as $morph => $resources) {
-                    $q->orWhere(fn ($q) => $q->where($typeColumn, $morph)->whereIn($idColumn, $resources->pluck('id')));
+                foreach ($byMorph as $morph => $ids) {
+                    $q->orWhere(fn ($q) => $q->where($typeColumn, $morph)->whereIn($idColumn, $ids));
                 }
             })
             ->pluck('id')->map(fn ($id): int => (int) $id)->all());

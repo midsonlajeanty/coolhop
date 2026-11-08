@@ -7,6 +7,8 @@ use Tests\Support\Database;
 afterEach(function (): void {
     $pdo = Database::pdo();
     $pdo->exec('alter table projects drop column if exists owner_team_id');
+    $pdo->exec('alter table services drop column if exists private_key_id');
+    $pdo->exec('alter table projects drop column if exists owner_type');
     $pdo->exec("delete from migrations where migration = '2099_01_01_000000_future'");
 });
 
@@ -52,3 +54,12 @@ it('accepts a newer schema when the guard passes', function (): void {
     expect($result->versionSupported)->toBeTrue()
         ->and($result->lastMigration)->toBe('2099_01_01_000000_future');
 });
+
+it('refuses an unknown reference column without a foreign key', function (string $sql, string $column) {
+    Database::pdo()->exec($sql);
+
+    expect(SchemaGuard::check(DB::connection())->unknownColumns)->toBe([$column]);
+})->with([
+    ['alter table services add column private_key_id bigint', 'services.private_key_id'],
+    ['alter table projects add column owner_type varchar(255)', 'projects.owner_type'],
+]);

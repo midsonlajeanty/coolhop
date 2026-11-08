@@ -29,6 +29,13 @@ final class References
                 new Reference('scheduled_database_backup_s3_storage', 's3_storage_id'),
                 new Reference('scheduled_volume_backup_s3_storage', 's3_storage_id'),
                 new Reference('projects', 'icon_s3_storage_id'),
+                new Reference('teams', 'avatar_s3_storage_id'),
+                new Reference('users', 'avatar_s3_storage_id'),
+                new Reference('instance_settings', 'avatar_s3_storage_id'),
+                new Reference('instance_settings', 'file_download_s3_storage_id'),
+                new Reference('database_backup_s3_replicas', 's3_storage_id'),
+                new Reference('volume_backup_s3_replicas', 's3_storage_id'),
+                new Reference('scheduled_volume_backup_executions', 's3_storage_id'),
             ],
             'cloud_provider_tokens' => [new Reference('servers', 'cloud_provider_token_id')],
             'private_keys' => [

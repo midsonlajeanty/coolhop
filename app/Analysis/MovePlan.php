@@ -41,6 +41,9 @@ final readonly class MovePlan
 
     public function fingerprint(): string
     {
-        return hash('sha256', serialize([$this->changes, $this->copies]));
+        $entries = array_map(serialize(...), [...$this->changes, ...$this->copies]);
+        sort($entries);
+
+        return hash('sha256', implode("\n", $entries));
     }
 }

@@ -13,7 +13,7 @@ final class SchemaGuard
         return new GuardResult(
             versionSupported: strcmp($lastMigration, KnownSchema::MIN_MIGRATION) >= 0,
             lastMigration: $lastMigration,
-            unknownColumns: array_values(array_unique([...self::unknownTeamColumns($db), ...self::unknownForeignKeys($db)])),
+            unknownColumns: array_values(array_unique([...self::unknownTeamColumns($db), ...self::unknownForeignKeys($db), ...self::unknownReferenceColumns($db)])),
         );
     }
 
@@ -49,5 +49,21 @@ final class SchemaGuard
             ->map(fn ($key): string => "{$key->source}.{$key->column_name}");
 
         return array_values($keys->all());
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function unknownReferenceColumns(ConnectionInterface $db): array
+    {
+        $columns = $db->table('information_schema.columns')
+            ->where('table_schema', 'public')
+            ->where(fn ($q) => $q->where('column_name', 'like', '%\_id')->orWhere('column_name', 'like', '%\_type'))
+            ->orderBy('table_name')->orderBy('column_name')
+            ->get(['table_name', 'column_name'])
+            ->map(fn ($row): string => $row->table_name.'.'.$row->column_name)
+            ->all();
+
+        return array_values(array_diff($columns, ReferenceColumns::ALL));
     }
 }
