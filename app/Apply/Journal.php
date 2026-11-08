@@ -65,10 +65,12 @@ final class Journal
     public function save(string $home): string
     {
         $path = self::path($home, $this->id);
-        if (! is_dir(dirname($path)) && ! mkdir(dirname($path), 0700, true)) {
-            throw new RuntimeException("Cannot create {$path}");
+        $written = (is_dir(dirname($path)) || @mkdir(dirname($path), 0700, true))
+            && @file_put_contents($path, $this->toJson()) !== false;
+
+        if (! $written) {
+            throw new RuntimeException("Cannot write the journal to {$path}. Nothing was changed.");
         }
-        file_put_contents($path, $this->toJson());
 
         return $path;
     }

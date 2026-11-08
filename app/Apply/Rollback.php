@@ -41,10 +41,11 @@ final class Rollback
             foreach (array_reverse($journal->created) as $row) {
                 $this->db->table($row['table'])->where('id', $row['id'])->delete();
             }
+
+            $journal->rolledBackAt = gmdate('c');
+            $journal->save($this->home);
         });
 
-        $journal->rolledBackAt = gmdate('c');
-        $journal->save($this->home);
         $this->cache->clear();
     }
 

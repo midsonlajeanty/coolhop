@@ -10,6 +10,7 @@ use App\Instance\Inventory;
 use App\Output\PlanRenderer;
 use App\Schema\SchemaGuard;
 use Illuminate\Database\ConnectionInterface;
+use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
 use RuntimeException;
 
@@ -98,7 +99,7 @@ class HopCommand extends Command
             return self::FAILURE;
         }
 
-        $this->info(sprintf('Moved %d servers to %s.', count($plan->servers), $target));
+        $this->info(sprintf('Moved %d %s to %s.', count($plan->servers), Str::plural('server', count($plan->servers)), $target));
         $this->line('Undo with: curl -fsSL '.config('coolhop.install_url').' | bash -s -- rollback '.$journal->id);
 
         return self::SUCCESS;

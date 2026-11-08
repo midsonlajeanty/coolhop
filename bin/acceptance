@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage="usage: bin/acceptance <postgres-container> <plan options...>"
+container="${1:?$usage}"
+shift
+
+root="$(cd "$(dirname "$0")/.." && pwd)"
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+
+dump() {
+  docker exec "$container" pg_dump -U postgres -d coolify --data-only --no-owner --inserts \
+    --exclude-table-data=public.migrations | grep -vE '^(--|\\restrict|\\unrestrict|SET |SELECT pg_catalog)' | sort
+}
+
+run() {
+  docker run --rm -i --network "container:${container}" \
+    -v "${root}/builds/coolhop.phar:/coolhop.phar:ro" -v "${work}:/home" \
+    -e DB_HOST=127.0.0.1 -e DB_PORT=5432 -e DB_DATABASE=coolify -e DB_USERNAME=postgres -e DB_PASSWORD=x \
+    -e SHOW_WELCOME_MESSAGE=false -e COOLHOP_HOME=/home -e COOLHOP_BACKUP=/home/coolify.dump -e APP_KEY="${APP_KEY:-}" \
+    serversideup/php:8.4-cli-alpine php /coolhop.phar "$@"
+}
+
+echo dump > "${work}/coolify.dump"
+dump > "${work}/before.sql"
+
+run teams
+run plan "$@" || true
+run apply "$@" --yes
+
+journal="$(basename "$(dirname "$(ls "${work}"/*/journal.json)")")"
+echo "journal: ${journal}"
+run rollback "${journal}" --yes
+
+dump > "${work}/after.sql"
+if diff -q "${work}/before.sql" "${work}/after.sql" > /dev/null; then
+  echo "acceptance: database identical after rollback"
+else
+  diff "${work}/before.sql" "${work}/after.sql" | head -40
+  echo "acceptance: database differs after rollback" >&2
+  exit 1
+fi

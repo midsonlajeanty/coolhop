@@ -36,7 +36,7 @@ final class Applier
             $created = $this->insertCopies($plan->copies);
             $changes = $this->applyChanges($plan->changes, $created);
 
-            return new Journal(
+            $journal = new Journal(
                 id: Journal::newId(),
                 createdAt: gmdate('c'),
                 request: $request->toArray(),
@@ -44,9 +44,11 @@ final class Applier
                 created: array_values($created),
                 backupPath: (string) $backupPath,
             );
+            $journal->save($this->home);
+
+            return $journal;
         });
 
-        $journal->save($this->home);
         $this->cache->clear();
 
         return $journal;

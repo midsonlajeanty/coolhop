@@ -117,3 +117,9 @@ it('refuses to apply on an unknown schema but still plans', function () {
         DB::statement('alter table projects drop column owner_team_id');
     }
 });
+
+it('uses the singular for one server', function () {
+    $this->artisan('apply', ['--from' => 'Agency', '--to' => 'Platform', '--server' => ['web-2'], '--yes' => true])
+        ->expectsOutputToContain('Moved 1 server to Platform.')
+        ->assertExitCode(0);
+});

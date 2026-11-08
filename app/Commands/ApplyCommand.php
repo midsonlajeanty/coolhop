@@ -10,6 +10,7 @@ use App\Output\PlanRenderer;
 use App\Schema\SchemaGuard;
 use Illuminate\Database\ConnectionInterface;
 use InvalidArgumentException;
+use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
 use RuntimeException;
 
@@ -62,7 +63,7 @@ class ApplyCommand extends Command
             return self::FAILURE;
         }
 
-        $this->info(sprintf('Moved %d servers to %s.', count($plan->servers), $plan->to->name));
+        $this->info(sprintf('Moved %d %s to %s.', count($plan->servers), Str::plural('server', count($plan->servers)), $plan->to->name));
         $this->line('Journal: '.$journal->id);
         $this->line('Undo with: curl -fsSL '.config('coolhop.install_url').' | bash -s -- rollback '.$journal->id);
 

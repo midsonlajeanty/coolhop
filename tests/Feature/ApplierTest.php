@@ -98,3 +98,19 @@ it('refuses a stale backup', function () {
     expect(fn () => $this->applier->apply($this->request, $fingerprint, $this->backup))
         ->toThrow(RuntimeException::class, 'Backup older than one hour');
 });
+
+it('writes nothing when the journal cannot be saved', function () {
+    $readOnly = $this->home.'/readonly';
+    mkdir($readOnly, 0500);
+    $applier = new Applier(DB::connection(), $this->planner, new CacheClearer('/nonexistent/artisan'), $readOnly);
+    $fingerprint = $this->planner->plan($this->request)->fingerprint();
+
+    try {
+        expect(fn () => $applier->apply($this->request, $fingerprint, $this->backup))->toThrow(RuntimeException::class, 'journal');
+    } finally {
+        chmod($readOnly, 0700);
+    }
+
+    expect(DB::table('servers')->find($this->s1)->team_id)->toBe($this->a)
+        ->and(DB::table('private_keys')->count())->toBe(1);
+});
